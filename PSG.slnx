@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="PSG.Application/PSG.Application.csproj" />
+  <Project Path="PSG.CrossCuting/PSG.CrossCuting.csproj" />
+  <Project Path="PSG.Domain/PSG.Domain.csproj" />
+  <Project Path="PSG.Infra.Data/PSG.Infra.Data.csproj" />
+  <Project Path="PSG.Presentation/PSG.Presentation.csproj" />
+</Solution>

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PSG.Application\PSG.Application.csproj" />
+    <ProjectReference Include="..\PSG.Domain\PSG.Domain.csproj" />
+    <ProjectReference Include="..\PSG.Infra.Data\PSG.Infra.Data.csproj" />
+  </ItemGroup>
+
+</Project>
