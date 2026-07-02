@@ -16,8 +16,10 @@ namespace PSG.Domain
         public int IdModulo { get; set; }
         public DateTime DataAcesso { get; set; }
         public DateTime? DataConclusao { get; set; }
+        public decimal Nota { get; set; }
         public string? ObsTempo { get; set; }
         public string? ObsNota { get; set; }
+        public string? ObsGeral { get; set; }
         public EnumStatus StatusInscricao { get; set; }
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true;
