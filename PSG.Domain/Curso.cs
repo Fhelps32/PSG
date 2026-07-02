@@ -9,16 +9,21 @@ namespace PSG.Domain
 {
     public class Curso
     {
-        [Key]
         public int IdCurso { get; set; }
-        [StringLength(100)]
         public string Nome { get; set; } = string.Empty;
+        public DateTime DataCadastro { get; set; } = DateTime.Now;
+        public bool Status { get; set; } = true; 
 
         public IEnumerable<Modulo> Modulos { get; set; } = Enumerable.Empty<Modulo>();
         public IEnumerable<Aluno> Alunos { get; set; } = Enumerable.Empty<Aluno>();
 
         private Curso()
         {
+        }
+
+        public Curso(string nome)
+        {
+            Nome = nome;
         }
     }
 }

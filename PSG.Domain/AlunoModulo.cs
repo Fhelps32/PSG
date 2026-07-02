@@ -11,24 +11,13 @@ namespace PSG.Domain
 {
     public class AlunoModulo
     {
-        [Key]
         public int IdAlunoModulo { get; set; }
-
-        [Required]
-        [ForeignKey("Aluno")]
         public int IdAluno { get; set; }
-
-        [Required]
-        [ForeignKey("Modulo")]
         public int IdModulo { get; set; }
-
-        [Required]
         public DateTime DataAcesso { get; set; }
         public DateTime? DataConclusao { get; set; }
         public string? ObsTempo { get; set; }
         public string? ObsNota { get; set; }
-
-        [Required]
         public EnumStatus StatusInscricao { get; set; }
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true;
@@ -38,6 +27,15 @@ namespace PSG.Domain
 
         private AlunoModulo()
         {
+        }
+
+        public AlunoModulo(Aluno aluno, Modulo modulo, DateTime dataAcesso, EnumStatus statusInscricao, DateTime? dataConclusao)
+        {
+            Aluno = aluno ?? throw new ArgumentNullException(nameof(aluno));
+            Modulo = modulo ?? throw new ArgumentNullException(nameof(modulo));
+            DataAcesso = dataAcesso;
+            StatusInscricao = statusInscricao;
+            DataConclusao = dataConclusao;
         }
     }
 }

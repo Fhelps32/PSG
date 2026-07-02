@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +22,13 @@ namespace PSG.Domain
 
         private Aluno()
         {
+        }
+
+        public Aluno(Curso curso, string matricula, string nome)
+        {
+            Curso = curso ?? throw new ArgumentNullException(nameof(curso));
+            Matricula = matricula;
+            Nome = nome;
         }
     }
 }
