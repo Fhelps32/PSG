@@ -1,13 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PSG.Application.Context;
 using PSG.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PSG.Application.Servicos.Aluno
+namespace PSG.Application.Servicos.Alunos
 {
     public class AlunoService
     {
@@ -36,6 +31,22 @@ namespace PSG.Application.Servicos.Aluno
             return alunoDto;
         }
 
+        public async Task<AlunoDto> ObterAlunoPorMatriculaAsync(string matricula)
+        {
+            var aluno = await _context.Alunos.FirstOrDefaultAsync(a => a.Matricula == matricula);
+            if (aluno == null)
+            {
+                throw new Exception($"Aluno com matrícula {matricula} não encontrado.");
+            }
+            var alunoDto = new AlunoDto(
+                aluno.IdAluno,
+                aluno.IdCurso,
+                aluno.Matricula,
+                aluno.Nome
+            );
+            return alunoDto;
+        }
+
         public async Task<AlunoDtoDetalhado> ObterAlunoDetalhadoPorIdAsync(int idAluno)
         {
             var alunoDto = await _context.Alunos.Include(a => a.Modulos)
@@ -46,7 +57,6 @@ namespace PSG.Application.Servicos.Aluno
                     a.Matricula,
                     a.Nome,
                     a.DataCadastro,
-                    a.Status,
                     a.Modulos.Select(am => new AlunoModuloDto(
                         am.IdAlunoModulo,
                         am.IdAluno,
@@ -64,16 +74,34 @@ namespace PSG.Application.Servicos.Aluno
             return alunoDto;
         }
 
+        public async Task<IEnumerable<AlunoDto>> ObterAlunosPorCursoAsync(int idCurso)
+        {
+            var alunos = await _context.Alunos
+                .Where(a => a.IdCurso == idCurso)
+                .Select(a => new AlunoDto(
+                    a.IdAluno,
+                    a.IdCurso,
+                    a.Matricula,
+                    a.Nome
+                ))
+                .ToListAsync();
+            return alunos;
+        }
+
         public async Task<AlunoDto> CriarAlunoAsync(AlunoDtoCriar alunoDto)
         {
             var curso = await _context.Cursos.FindAsync(alunoDto.IdCurso);
+            
             if (curso == null)
             {
                 throw new Exception($"Curso com ID {alunoDto.IdCurso} não encontrado.");
             }
+
             var aluno = new Aluno(curso, alunoDto.Matricula, alunoDto.Nome);
+
             _context.Alunos.Add(aluno);
             await _context.SaveChangesAsync();
+
             return new AlunoDto(
                 aluno.IdAluno,
                 aluno.IdCurso,
@@ -93,5 +121,40 @@ namespace PSG.Application.Servicos.Aluno
             ));
             return await Task.FromResult(dtos);
         }
-    }
-}
+
+        public async Task AtualizarAlunoAsync(int idAluno, AlunoDtoCriar alunoDto)
+        {
+            var aluno = await _context.Alunos.FindAsync(idAluno);
+            if (aluno == null)
+            {
+                throw new Exception($"Aluno com ID {idAluno} não encontrado.");
+            }
+            var curso = await _context.Cursos.FindAsync(alunoDto.IdCurso);
+            if (curso == null)
+            {
+                throw new Exception($"Curso com ID {alunoDto.IdCurso} não encontrado.");
+            }
+            aluno.IdCurso = alunoDto.IdCurso;
+            aluno.Matricula = alunoDto.Matricula;
+            aluno.Nome = alunoDto.Nome;
+            _context.Alunos.Update(aluno);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ExcluirAlunoAsync(int idAluno)
+        {
+            var aluno = await _context.Alunos.FindAsync(idAluno);
+            if (aluno == null)
+            {
+                throw new Exception($"Aluno com ID {idAluno} não encontrado.");
+            }
+            if (!aluno.Status)
+            {
+                throw new Exception($"O Aluno com ID {idAluno} já está inativo.");
+            }
+
+            aluno.SwitchStatus();
+            _context.Alunos.Update(aluno);
+            await _context.SaveChangesAsync();
+        }
+}}

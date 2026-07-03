@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PSG.Application.Servicos.Aluno
+namespace PSG.Application.Servicos.Alunos
 {
     public sealed record AlunoDto(
         int IdAluno,
@@ -20,7 +20,6 @@ namespace PSG.Application.Servicos.Aluno
         string Matricula,
         string Nome,
         DateTime DataCadastro,
-        bool Status,
         IEnumerable<AlunoModuloDto> Modulos
     );
 
