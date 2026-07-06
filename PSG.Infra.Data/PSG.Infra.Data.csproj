@@ -24,4 +24,8 @@
     <ProjectReference Include="..\PSG.Domain\PSG.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ExternalServices\Moodle\" />
+  </ItemGroup>
+
 </Project>
