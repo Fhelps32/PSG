@@ -4,7 +4,7 @@
     {
         public int IdAluno { get; set; }
         public int IdCurso { get; set; }
-        public string Matricula { get; set; }
+        public string? Matricula { get; set; }
         public string Nome { get; set; }
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true;
@@ -20,6 +20,12 @@
         {
             Curso = curso ?? throw new ArgumentNullException(nameof(curso));
             Matricula = matricula;
+            Nome = nome;
+        }
+
+        public Aluno(Curso curso, string nome)
+        {
+            Curso = curso ?? throw new ArgumentNullException(nameof(curso));
             Nome = nome;
         }
 
