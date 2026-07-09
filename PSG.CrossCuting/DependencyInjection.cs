@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PSG.Application.Interfaces;
 using PSG.Infra.Data;
+using PSG.Infra.Data.Csv;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,8 @@ namespace PSG.CrossCuting
         #region Application
         public static IServiceCollection AddAplication(this IServiceCollection services) 
         {
+            services.AddScoped<ICsvReaderService, CsvReaderService>();
+
             return services;
         }
         #endregion

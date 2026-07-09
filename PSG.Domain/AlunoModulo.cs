@@ -16,6 +16,7 @@ namespace PSG.Domain
         public int IdModulo { get; set; }
         public DateTime DataAcesso { get; set; }
         public DateTime? DataConclusao { get; set; }
+        public DateTime? DataMatricula { get; set; }
         public decimal Nota { get; set; }
         public string? ObsTempo { get; set; }
         public string? ObsNota { get; set; }
