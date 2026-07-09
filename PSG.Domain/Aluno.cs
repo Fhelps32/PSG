@@ -6,6 +6,7 @@
         public int IdCurso { get; set; }
         public string? Matricula { get; set; }
         public string Nome { get; set; }
+        public string? Celular { get; set; }
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true;
 
