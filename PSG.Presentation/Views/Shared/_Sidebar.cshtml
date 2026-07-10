@@ -1,0 +1,90 @@
+﻿@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<aside class="sidebar">
+
+    <div class="logo">
+
+        <i class="bi bi-mortarboard-fill"></i>
+
+        <span>PSG</span>
+
+    </div>
+
+    <ul>
+
+        <li class="@(controller == "Home" ? "active" : "")">
+            <a asp-controller="Home" asp-action="Index">
+
+                <i class="bi bi-grid"></i>
+
+                Dashboard
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Aluno" ? "active" : "")">
+            <a asp-controller="Aluno" asp-action="Index">
+
+                <i class="bi bi-person"></i>
+
+                Alunos
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Inscricao" ? "active" : "")">
+            <a asp-controller="Inscricao" asp-action="Index">
+
+                <i class="bi bi-journal-text"></i>
+
+                Inscrições
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Curso" ? "active" : "")">
+            <a asp-controller="Curso" asp-action="Index">
+
+                <i class="bi bi-book"></i>
+
+                Cursos
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Modulo" ? "active" : "")">
+            <a asp-controller="Modulo" asp-action="Index">
+
+                <i class="bi bi-journal-text"></i>
+
+                Módulos
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Relatorio" ? "active" : "")">
+            <a asp-controller="Relatorio" asp-action="Index">
+
+                <i class="bi bi-bar-chart"></i>
+
+                Relatórios
+
+            </a>
+        </li>
+
+        <li class="@(controller == "Configuracao" ? "active" : "")">
+            <a asp-controller="Configuracao" asp-action="Index">
+
+                <i class="bi bi-gear"></i>
+
+                Configurações
+
+            </a>
+        </li>
+
+    </ul>
+
+</aside>
