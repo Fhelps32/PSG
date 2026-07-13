@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure;
+using Microsoft.EntityFrameworkCore;
 using PSG.Application.Context;
+using PSG.Application.Servicos.Shared;
 using PSG.Domain;
 using System;
 using System.Collections.Generic;
@@ -38,12 +40,21 @@ namespace PSG.Application.Servicos.Modulos
 
         public async Task<Modulo> ObterModuloPorIdAsync(int idModulo)
         {
-            return await _context.Modulos.FirstOrDefaultAsync(m => m.IdModulo == idModulo);
+            var modulo = await _context.Modulos.FirstOrDefaultAsync(m => m.IdModulo == idModulo);
+            if (modulo == null)
+            {
+                throw new Exception($"Módulo com ID {idModulo} não encontrado.");
+            } 
+            return modulo;
         }
 
-        public async Task<IEnumerable<Modulo>> ObterModulosPorCursoAsync(int idCurso)
+        public async Task<PagedResult<Modulo>> ObterModulosPorCursoPaginadoAsync(int idCurso, int pagina)
         {
-            return await _context.Modulos.Where(m => m.IdCurso == idCurso).ToListAsync();
+            var query = _context.Modulos.AsQueryable();
+            query = query.Where(m => m.IdCurso == idCurso);
+            
+            var result = await query.Paginar<Modulo>(new PaginationRequest { NumeroPagina = pagina, TamanhoPagina = 20 });
+            return result;
         }
     }
 }
