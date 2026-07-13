@@ -1,5 +1,110 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@using PSG.Domain.Enum
+@model PSG.Presentation.Models.Incricao.InscricaoIndexViewModel
 @{
+    ViewData["Title"] = "Inscrições";
+}
+
+@* Cabeçalho da página: título + botão de ação, no estilo do mock (título grande à esquerda, botão azul à direita) *@
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Inscrições</h1>
+        <p class="page-subtitle">Acompanhamento dos alunos por módulo</p>
+    </div>
+
+    <button type="button" class="btn-psg">
+        <i class="bi bi-plus-lg"></i>
+        Nova inscrição
+    </button>
+</div>
+
+@* Card branco arredondado que envolve a tabela (mesmo visual do card da imagem) *@
+<div class="table-card">
+    <table class="psg-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Curso</th>
+                <th>Módulo</th>
+                <th>Nota</th>
+                <th>Status</th>
+                <th>Data Início</th>
+                <th>Data Fim</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @* Só percorre quando há registros; caso contrário mostra o estado vazio. *@
+            @if (Model?.Inscricoes != null && Model.Inscricoes.Any())
+            {
+                @foreach (var item in Model.Inscricoes)
+                {
+                    @* A classe da linha aplica um leve tom de fundo conforme o status (verde/vermelho/amarelo) *@
+                    <tr class="@RowClass(item.EnumStatus)">
+                        <td class="fw-600">@item.NomeAluno</td>
+                        <td>@item.NomeCurso</td>
+                        @* Módulo exibido como "03 - Máquinas Elétricas" (número com 2 dígitos) *@
+                        <td>@item.NumeroModulo.ToString("00") - @item.NomeModulo</td>
+                        @* Nota é nullable: mostra "—" quando ainda não há nota *@
+                        <td>@(item.Nota.HasValue ? item.Nota.Value.ToString("0.0") : "—")</td>
+                        <td>
+                            <span class="status-badge @StatusClass(item.EnumStatus)">
+                                @StatusText(item.EnumStatus)
+                            </span>
+                        </td>
+                        <td>@item.DataInicio.ToString("dd/MM/yyyy")</td>
+                        @* Data Fim também é nullable (módulo em andamento não tem fim) *@
+                        <td>@(item.DataFim.HasValue ? item.DataFim.Value.ToString("dd/MM/yyyy") : "—")</td>
+                        <td class="text-end">
+                            @* Ações da linha: editar e excluir (ainda sem rota ligada) *@
+                            <button type="button" class="btn-icon" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn-icon btn-icon-danger" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                @* Estado vazio: ocupa todas as colunas e centraliza a mensagem *@
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <span>Nenhuma inscrição encontrada.</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Helpers locais para traduzir o EnumStatus em texto amigável e em classes de CSS *@
+@functions {
+    string StatusText(EnumStatus status) => status switch
+    {
+        EnumStatus.Aprovado => "Aprovado",
+        EnumStatus.Reprovado => "Reprovado",
+        EnumStatus.EmAndamento => "Em Andamento",
+        EnumStatus.Cancelado => "Cancelado",
+        _ => status.ToString()
+    };
+
+    string StatusClass(EnumStatus status) => status switch
+    {
+        EnumStatus.Aprovado => "badge-aprovado",
+        EnumStatus.Reprovado => "badge-reprovado",
+        EnumStatus.EmAndamento => "badge-andamento",
+        EnumStatus.Cancelado => "badge-cancelado",
+        _ => "badge-cancelado"
+    };
+
+    string RowClass(EnumStatus status) => status switch
+    {
+        EnumStatus.Aprovado => "row-aprovado",
+        EnumStatus.Reprovado => "row-reprovado",
+        EnumStatus.EmAndamento => "row-andamento",
+        _ => ""
+    };
 }

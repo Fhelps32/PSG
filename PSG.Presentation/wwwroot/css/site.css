@@ -91,3 +91,183 @@ body {
     font-weight: 600;
     border-left: 4px solid #2563eb;
 }
+
+/* ===========================================================
+   Área de conteúdo / telas de listagem (ex.: Inscrições)
+   Adicionado para a view do dashboard de AlunoModulo.
+   =========================================================== */
+
+/* Desloca o conteúdo principal para não ficar embaixo da sidebar fixa (250px).
+   O .container padrão do Bootstrap é sobrescrito para ocupar o espaço restante. */
+.container {
+    margin-left: 250px;
+    max-width: none;
+    width: auto;
+    padding: 32px 40px;
+}
+
+/* Cabeçalho da página: título à esquerda e botão de ação à direita */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.page-subtitle {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Botão primário azul (mesmo tom do "Editar" da imagem) */
+.btn-psg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+    .btn-psg:hover {
+        background: #1d4ed8;
+    }
+
+/* Card branco que envolve a tabela */
+.table-card {
+    background: #fff;
+    border: 1px solid #eef0f4;
+    border-radius: 16px;
+    padding: 8px 8px 4px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, .04);
+    overflow: hidden;
+}
+
+/* Tabela */
+.psg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+    .psg-table thead th {
+        text-align: left;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #eef0f4;
+        white-space: nowrap;
+    }
+
+    .psg-table tbody td {
+        padding: 16px 18px;
+        color: #334155;
+        border-bottom: 1px solid #f3f4f7;
+        white-space: nowrap;
+    }
+
+    .psg-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.fw-600 {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.text-end {
+    text-align: right;
+}
+
+/* Tons de fundo por status na linha (bem sutis, como no mock) */
+.row-aprovado {
+    background: #f3fbf5;
+}
+
+.row-reprovado {
+    background: #fdf4f4;
+}
+
+.row-andamento {
+    background: #fffbf1;
+}
+
+/* Badges de status */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.badge-aprovado {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.badge-reprovado {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.badge-andamento {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.badge-cancelado {
+    background: #eceef1;
+    color: #64748b;
+}
+
+/* Botões de ícone (ações da linha) */
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 16px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+    .btn-icon:hover {
+        background: #eef4ff;
+        color: #2563eb;
+    }
+
+.btn-icon-danger:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* Estado vazio da tabela */
+.empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 48px 0 !important;
+}
+
+    .empty-state i {
+        display: block;
+        font-size: 32px;
+        margin-bottom: 8px;
+    }

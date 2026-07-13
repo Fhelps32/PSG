@@ -20,9 +20,10 @@ namespace PSG.Presentation.Models.Incricao
         public string NomeCurso { get; set; }
         public string NomeModulo { get; set; }
         public int NumeroModulo { get; set; }
-        public decimal Nota { get; set; }
+        // Nota agora é nullable: um módulo em andamento / não iniciado pode não ter nota ainda.
+        public decimal? Nota { get; set; }
         public EnumStatus EnumStatus { get; set; }
         public DateTime DataInicio { get; set; }
-        public DateTime DataFim { get; set; }
+        public DateTime? DataFim { get; set; }
     }
 }
