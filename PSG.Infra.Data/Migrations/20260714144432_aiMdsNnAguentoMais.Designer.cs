@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PSG.Infra.Data;
 
@@ -11,9 +12,11 @@ using PSG.Infra.Data;
 namespace PSG.Infra.Data.Migrations
 {
     [DbContext(typeof(PSGDbContext))]
-    partial class PSGDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714144432_aiMdsNnAguentoMais")]
+    partial class aiMdsNnAguentoMais
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

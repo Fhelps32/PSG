@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PSG.Application.Context;
 using PSG.Domain;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PSG.Infra.Data
 {
-    public class PSGDbContext : DbContext
+    public class PSGDbContext : DbContext, IPSGDbContext
     {
         public PSGDbContext(DbContextOptions<PSGDbContext> options) : base(options) 
         {

@@ -14,8 +14,8 @@ namespace PSG.Domain
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true; 
 
-        public IEnumerable<Modulo> Modulos { get; set; } = Enumerable.Empty<Modulo>();
-        public IEnumerable<Aluno> Alunos { get; set; } = Enumerable.Empty<Aluno>();
+        public ICollection<Modulo> Modulos { get; set; } = new List<Modulo>();
+        public ICollection<Aluno> Alunos { get; set; } = new List<Aluno>();
 
         private Curso()
         {

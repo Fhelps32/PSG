@@ -15,7 +15,7 @@ namespace PSG.Infra.Data.Mappings
         {
             builder.HasKey(a => a.IdAluno);
             builder.Property(a => a.Nome).IsRequired().HasMaxLength(100);
-            builder.Property(a => a.Matricula).IsRequired().HasMaxLength(20);
+            builder.Property(a => a.Matricula).HasMaxLength(20);
             builder.Property(a => a.DataCadastro).IsRequired();
             builder.Property(a => a.Status).IsRequired();
 

@@ -1,14 +1,17 @@
+```cshtml
 @using PSG.Domain.Enum
 @model PSG.Presentation.Models.Incricao.InscricaoIndexViewModel
+
 @{
     ViewData["Title"] = "Inscrições";
 }
 
-@* Cabeçalho da página: título + botão de ação, no estilo do mock (título grande à esquerda, botão azul à direita) *@
 <div class="page-header">
     <div>
         <h1 class="page-title">Inscrições</h1>
-        <p class="page-subtitle">Acompanhamento dos alunos por módulo</p>
+        <p class="page-subtitle">
+            Acompanhamento dos alunos por módulo
+        </p>
     </div>
 
     <button type="button" class="btn-psg">
@@ -17,71 +20,235 @@
     </button>
 </div>
 
-@* Card branco arredondado que envolve a tabela (mesmo visual do card da imagem) *@
-<div class="table-card">
-    <table class="psg-table">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Curso</th>
-                <th>Módulo</th>
-                <th>Nota</th>
-                <th>Status</th>
-                <th>Data Início</th>
-                <th>Data Fim</th>
-                <th class="text-end">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            @* Só percorre quando há registros; caso contrário mostra o estado vazio. *@
-            @if (Model?.Inscricoes != null && Model.Inscricoes.Any())
-            {
-                @foreach (var item in Model.Inscricoes)
-                {
-                    @* A classe da linha aplica um leve tom de fundo conforme o status (verde/vermelho/amarelo) *@
-                    <tr class="@RowClass(item.EnumStatus)">
-                        <td class="fw-600">@item.NomeAluno</td>
-                        <td>@item.NomeCurso</td>
-                        @* Módulo exibido como "03 - Máquinas Elétricas" (número com 2 dígitos) *@
-                        <td>@item.NumeroModulo.ToString("00") - @item.NomeModulo</td>
-                        @* Nota é nullable: mostra "—" quando ainda não há nota *@
-                        <td>@(item.Nota.HasValue ? item.Nota.Value.ToString("0.0") : "—")</td>
-                        <td>
-                            <span class="status-badge @StatusClass(item.EnumStatus)">
-                                @StatusText(item.EnumStatus)
-                            </span>
-                        </td>
-                        <td>@item.DataInicio.ToString("dd/MM/yyyy")</td>
-                        @* Data Fim também é nullable (módulo em andamento não tem fim) *@
-                        <td>@(item.DataFim.HasValue ? item.DataFim.Value.ToString("dd/MM/yyyy") : "—")</td>
-                        <td class="text-end">
-                            @* Ações da linha: editar e excluir (ainda sem rota ligada) *@
-                            <button type="button" class="btn-icon" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn-icon btn-icon-danger" title="Excluir">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-            }
-            else
-            {
-                @* Estado vazio: ocupa todas as colunas e centraliza a mensagem *@
-                <tr>
-                    <td colspan="8" class="empty-state">
-                        <i class="bi bi-inbox"></i>
-                        <span>Nenhuma inscrição encontrada.</span>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="filter-card">
+
+    <form asp-action="Index" method="get">
+
+        <div class="filter-grid">
+
+            <div class="filter-item filter-search">
+
+                <label>Nome do aluno</label>
+
+                <input type="text"
+                       name="NomeAluno"
+                       value="@Context.Request.Query["NomeAluno"]"
+                       class="form-control"
+                       placeholder="Digite o nome..." />
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>Curso</label>
+
+                <select asp-for="CursoId"
+                        asp-items="Model.Cursos"
+                        class="form-select">
+
+                    <option value="">Todos</option>
+
+                </select>
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>Módulo</label>
+
+                <select asp-for="ModuloId"
+                        asp-items="Model.Modulos"
+                        class="form-select">
+
+                    <option value="">Todos</option>
+
+                </select>
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>Status</label>
+
+                <select asp-for="StatusId"
+                        asp-items="Model.Status"
+                        class="form-select">
+
+                    <option value="">Todos</option>
+
+                </select>
+
+            </div>
+
+            <div class="filter-buttons">
+
+                <button class="btn-psg" type="submit">
+
+                    <i class="bi bi-search"></i>
+
+                    Filtrar
+
+                </button>
+
+                <a asp-action="Index"
+                       class="btn-outline-psg">
+
+                    Limpar
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
 </div>
 
-@* Helpers locais para traduzir o EnumStatus em texto amigável e em classes de CSS *@
-@functions {
+<div class="table-card">
+
+    <div class="table-responsive-custom">
+
+        <table class="psg-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Nome</th>
+
+                    <th>Curso</th>
+
+                    <th>Módulo</th>
+
+                    <th>Nota</th>
+
+                    <th>Status</th>
+
+                    <th>Data Início</th>
+
+                    <th>Data Fim</th>
+
+                    <th class="text-end">
+                        Ações
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @if (Model?.Inscricoes != null && Model.Inscricoes.Any())
+                {
+                    foreach (var item in Model.Inscricoes)
+                    {
+                        <tr class="@RowClass(item.EnumStatus)">
+
+                            <td class="fw-600">
+
+                                @item.NomeAluno
+
+                            </td>
+
+                            <td>
+
+                                @item.NomeCurso
+
+                            </td>
+
+                            <td>
+
+                                @item.NumeroModulo.ToString("00")
+                                -
+                                @item.NomeModulo
+
+                            </td>
+
+                            <td>
+
+                                @(item.Nota.HasValue
+                                    ? item.Nota.Value.ToString("0.0")
+                                    : "—")
+
+                            </td>
+
+                            <td>
+
+                                <span class="status-badge @StatusClass(item.EnumStatus)">
+
+                                    @StatusText(item.EnumStatus)
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                @item.DataInicio.ToString("dd/MM/yyyy")
+
+                            </td>
+
+                            <td>
+
+                                @(item.DataFim.HasValue
+                                    ? item.DataFim.Value.ToString("dd/MM/yyyy")
+                                    : "—")
+
+                            </td>
+
+                            <td class="text-end">
+
+                                <button type="button"
+                                        class="btn-icon"
+                                        title="Editar">
+
+                                    <i class="bi bi-pencil"></i>
+
+                                </button>
+
+                                <button type="button"
+                                        class="btn-icon btn-icon-danger"
+                                        title="Excluir">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+
+                        <td colspan="8" class="empty-state">
+
+                            <i class="bi bi-inbox"></i>
+
+                            <span>
+
+                                Nenhuma inscrição encontrada.
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+@functions
+{
     string StatusText(EnumStatus status) => status switch
     {
         EnumStatus.Aprovado => "Aprovado",
@@ -108,3 +275,5 @@
         _ => ""
     };
 }
+```
+

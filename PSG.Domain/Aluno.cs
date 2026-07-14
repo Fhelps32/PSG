@@ -11,7 +11,7 @@
         public bool Status { get; set; } = true;
 
         public Curso Curso { get; set; }
-        public IEnumerable<AlunoModulo> Modulos { get; set; }
+        public ICollection<AlunoModulo> Modulos { get; set; } = new List<AlunoModulo>();
 
         private Aluno()
         {

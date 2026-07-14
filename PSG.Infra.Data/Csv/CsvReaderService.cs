@@ -1,6 +1,7 @@
 ﻿using CsvHelper.Configuration;
 using PSG.Application.Interfaces;
 using PSG.Application.Servicos.Csv;
+using PSG.Infra.Data.Csv.Maps;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,6 +24,7 @@ namespace PSG.Infra.Data.Csv
 
             using var reader = new StreamReader(stream);
             using var csv = new CsvHelper.CsvReader(reader, config);
+            csv.Context.RegisterClassMap<LinhaCsvMap>();
 
             return csv.GetRecords<LinhaCsvDto>().ToList();
         }

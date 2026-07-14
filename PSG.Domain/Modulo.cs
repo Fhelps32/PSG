@@ -18,7 +18,7 @@ namespace PSG.Domain
         public bool Status { get; set; } = true;
 
         public Curso Curso { get; set; }
-        public IEnumerable<AlunoModulo> Alunos { get; set; }
+        public ICollection<AlunoModulo> Alunos { get; set; } = new List<AlunoModulo>();
 
         private Modulo()
         {        

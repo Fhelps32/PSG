@@ -12,8 +12,8 @@ using PSG.Infra.Data;
 namespace PSG.Infra.Data.Migrations
 {
     [DbContext(typeof(PSGDbContext))]
-    [Migration("20260702162842_agrVai")]
-    partial class agrVai
+    [Migration("20260714141859_socorro")]
+    partial class socorro
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,9 @@ namespace PSG.Infra.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAluno"));
+
+                    b.Property<string>("Celular")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("DataCadastro")
                         .HasColumnType("datetime2");
@@ -76,11 +79,21 @@ namespace PSG.Infra.Data.Migrations
                     b.Property<DateTime?>("DataConclusao")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DataMatricula")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("IdAluno")
                         .HasColumnType("int");
 
                     b.Property<int>("IdModulo")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("Nota")
+                        .HasPrecision(4, 2)
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<string>("ObsGeral")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ObsNota")
                         .HasColumnType("nvarchar(max)");

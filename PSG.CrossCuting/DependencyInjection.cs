@@ -1,7 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PSG.Application.Context;
 using PSG.Application.Interfaces;
+using PSG.Application.Servicos.AlunoModulos;
+using PSG.Application.Servicos.Csv;
+using PSG.Application.Servicos.Cursos;
+using PSG.Domain;
 using PSG.Infra.Data;
 using PSG.Infra.Data.Csv;
 using System;
@@ -16,9 +21,14 @@ namespace PSG.CrossCuting
     public static class DependencyInjection
     {
         #region Application
-        public static IServiceCollection AddAplication(this IServiceCollection services) 
+        public static IServiceCollection AddApplication(this IServiceCollection services) 
         {
+            services.AddScoped<IPSGDbContext, PSGDbContext>();
             services.AddScoped<ICsvReaderService, CsvReaderService>();
+            services.AddScoped<CsvImporterService>();
+            services.AddScoped<AlunoModuloService>();
+            services.AddScoped<CursoService>();
+            services.AddScoped<AlunoModuloService>();
 
             return services;
         }

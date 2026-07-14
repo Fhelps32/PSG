@@ -1,15 +1,19 @@
 ﻿@{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
-    var action = ViewContext.RouteData.Values["action"]?.ToString();
 }
 
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
 
     <div class="logo">
 
-        <i class="bi bi-mortarboard-fill"></i>
+        <div class="logo-content">
+            <i class="bi bi-mortarboard-fill"></i>
+            <span>PSG</span>
+        </div>
 
-        <span>PSG</span>
+        <button id="toggleSidebar" class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
 
     </div>
 
@@ -17,74 +21,69 @@
 
         <li class="@(controller == "Home" ? "active" : "")">
             <a asp-controller="Home" asp-action="Index">
-
                 <i class="bi bi-grid"></i>
-
-                Dashboard
-
+                <span>Dashboard</span>
             </a>
         </li>
 
         <li class="@(controller == "Aluno" ? "active" : "")">
             <a asp-controller="Aluno" asp-action="Index">
-
                 <i class="bi bi-person"></i>
-
-                Alunos
-
+                <span>Alunos</span>
             </a>
         </li>
 
         <li class="@(controller == "Inscricao" ? "active" : "")">
             <a asp-controller="Inscricao" asp-action="Index">
-
                 <i class="bi bi-journal-text"></i>
-
-                Inscrições
-
+                <span>Inscrições</span>
             </a>
         </li>
 
         <li class="@(controller == "Curso" ? "active" : "")">
             <a asp-controller="Curso" asp-action="Index">
-
                 <i class="bi bi-book"></i>
-
-                Cursos
-
+                <span>Cursos</span>
             </a>
         </li>
 
         <li class="@(controller == "Modulo" ? "active" : "")">
             <a asp-controller="Modulo" asp-action="Index">
-
-                <i class="bi bi-journal-text"></i>
-
-                Módulos
-
+                <i class="bi bi-collection"></i>
+                <span>Módulos</span>
             </a>
         </li>
 
         <li class="@(controller == "Relatorio" ? "active" : "")">
             <a asp-controller="Relatorio" asp-action="Index">
-
                 <i class="bi bi-bar-chart"></i>
-
-                Relatórios
-
+                <span>Relatórios</span>
             </a>
         </li>
 
         <li class="@(controller == "Configuracao" ? "active" : "")">
             <a asp-controller="Configuracao" asp-action="Index">
-
                 <i class="bi bi-gear"></i>
-
-                Configurações
-
+                <span>Configurações</span>
             </a>
         </li>
 
     </ul>
 
 </aside>
+
+<script>
+
+    const sidebar=document.getElementById("sidebar");
+
+    const btn=document.getElementById("toggleSidebar");
+
+    btn.addEventListener("click",()=>{
+
+        sidebar.classList.toggle("collapsed");
+
+        document.body.classList.toggle("sidebar-collapsed");
+
+    });
+
+</script>

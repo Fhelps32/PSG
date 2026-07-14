@@ -17,6 +17,7 @@ namespace PSG.Infra.Data.Mappings
             builder.Property(am => am.DataAcesso).IsRequired();
             builder.Property(am => am.Status).IsRequired();
             builder.Property(am => am.StatusInscricao).IsRequired();
+            builder.Property(am => am.Nota).HasPrecision(4, 2);
 
             builder.HasOne(am => am.Aluno)
                    .WithMany(a => a.Modulos)

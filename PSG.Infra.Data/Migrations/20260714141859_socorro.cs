@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PSG.Infra.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class agrVai : Migration
+    public partial class socorro : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,6 +35,7 @@ namespace PSG.Infra.Data.Migrations
                     IdCurso = table.Column<int>(type: "int", nullable: false),
                     Matricula = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Celular = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DataCadastro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -82,8 +83,11 @@ namespace PSG.Infra.Data.Migrations
                     IdModulo = table.Column<int>(type: "int", nullable: false),
                     DataAcesso = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataConclusao = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DataMatricula = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Nota = table.Column<decimal>(type: "decimal(4,2)", precision: 4, scale: 2, nullable: false),
                     ObsTempo = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ObsNota = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ObsGeral = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StatusInscricao = table.Column<int>(type: "int", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<bool>(type: "bit", nullable: false)
