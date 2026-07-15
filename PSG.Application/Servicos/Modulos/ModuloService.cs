@@ -52,7 +52,7 @@ namespace PSG.Application.Servicos.Modulos
         {
             var query = _context.Modulos.AsQueryable();
             query = query.Where(m => m.IdCurso == idCurso);
-            
+
             var result = await query.Paginar<Modulo>(new PaginationRequest { NumeroPagina = pagina, TamanhoPagina = 20 });
             return result;
         }

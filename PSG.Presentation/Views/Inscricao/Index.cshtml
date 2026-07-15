@@ -1,254 +1,220 @@
-```cshtml
 @using PSG.Domain.Enum
 @model PSG.Presentation.Models.Incricao.InscricaoIndexViewModel
-
 @{
     ViewData["Title"] = "Inscrições";
 }
 
-<div class="page-header">
+@* ===== Cabeçalho da página ===== *@
+<div class="flex items-center justify-between mb-6">
     <div>
-        <h1 class="page-title">Inscrições</h1>
-        <p class="page-subtitle">
-            Acompanhamento dos alunos por módulo
-        </p>
+        <h1 class="text-3xl font-bold text-slate-800">Inscrições</h1>
+        <p class="text-slate-500 text-sm mt-1">Acompanhamento dos alunos por módulo</p>
     </div>
 
-    <button type="button" class="btn-psg">
+    <button type="button"
+            class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors">
         <i class="bi bi-plus-lg"></i>
         Nova inscrição
     </button>
 </div>
 
-<div class="filter-card">
+@* ===== Card de filtros ===== *@
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-6">
+    <form asp-action="Index" method="get"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
 
-    <form asp-action="Index" method="get">
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Nome do aluno</label>
+            <input type="text"
+                   name="nomeAluno"
+                   value="@Model.NomeAluno"
+                   placeholder="Digite o nome..."
+                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+        </div>
 
-        <div class="filter-grid">
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Curso</label>
+            <select asp-for="CursoId" asp-items="Model.Cursos"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                <option value="">Todos</option>
+            </select>
+        </div>
 
-            <div class="filter-item filter-search">
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Módulo</label>
+            <select asp-for="ModuloId" asp-items="Model.Modulos"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                <option value="">Todos</option>
+            </select>
+        </div>
 
-                <label>Nome do aluno</label>
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Status</label>
+            <select asp-for="StatusId" asp-items="Model.Status"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                <option value="">Todos</option>
+            </select>
+        </div>
 
-                <input type="text"
-                       name="NomeAluno"
-                       value="@Context.Request.Query["NomeAluno"]"
-                       class="form-control"
-                       placeholder="Digite o nome..." />
-
-            </div>
-
-            <div class="filter-item">
-
-                <label>Curso</label>
-
-                <select asp-for="CursoId"
-                        asp-items="Model.Cursos"
-                        class="form-select">
-
-                    <option value="">Todos</option>
-
-                </select>
-
-            </div>
-
-            <div class="filter-item">
-
-                <label>Módulo</label>
-
-                <select asp-for="ModuloId"
-                        asp-items="Model.Modulos"
-                        class="form-select">
-
-                    <option value="">Todos</option>
-
-                </select>
-
-            </div>
-
-            <div class="filter-item">
-
-                <label>Status</label>
-
-                <select asp-for="StatusId"
-                        asp-items="Model.Status"
-                        class="form-select">
-
-                    <option value="">Todos</option>
-
-                </select>
-
-            </div>
-
-            <div class="filter-buttons">
-
-                <button class="btn-psg" type="submit">
-
-                    <i class="bi bi-search"></i>
-
-                    Filtrar
-
-                </button>
-
-                <a asp-action="Index"
-                       class="btn-outline-psg">
-
-                    Limpar
-
-                </a>
-
-            </div>
-
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                <i class="bi bi-search"></i>
+                Filtrar
+            </button>
+            <a asp-action="Index"
+               class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors">
+                Limpar
+            </a>
         </div>
 
     </form>
-
 </div>
 
-<div class="table-card">
-
-    <div class="table-responsive-custom">
-
-        <table class="psg-table">
-
+@* ===== Card da tabela =====
+   overflow-hidden no card só arredonda as bordas; o scroll horizontal fica
+   no wrapper interno (overflow-x-auto), então nada é cortado — resolve o
+   problema das colunas sendo cortadas. *@
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
             <thead>
-
-                <tr>
-
-                    <th>Nome</th>
-
-                    <th>Curso</th>
-
-                    <th>Módulo</th>
-
-                    <th>Nota</th>
-
-                    <th>Status</th>
-
-                    <th>Data Início</th>
-
-                    <th>Data Fim</th>
-
-                    <th class="text-end">
-                        Ações
-                    </th>
-
+                <tr class="text-left text-slate-500 border-b border-slate-100">
+                    <th class="px-5 py-4 font-semibold">Nome</th>
+                    <th class="px-5 py-4 font-semibold">Curso</th>
+                    <th class="px-5 py-4 font-semibold">Módulo</th>
+                    <th class="px-5 py-4 font-semibold">Nota</th>
+                    <th class="px-5 py-4 font-semibold">Status</th>
+                    <th class="px-5 py-4 font-semibold whitespace-nowrap">Data Início</th>
+                    <th class="px-5 py-4 font-semibold whitespace-nowrap">Data Fim</th>
+                    <th class="px-5 py-4 font-semibold text-right">Ações</th>
                 </tr>
-
             </thead>
-
             <tbody>
-
                 @if (Model?.Inscricoes != null && Model.Inscricoes.Any())
                 {
                     foreach (var item in Model.Inscricoes)
                     {
-                        <tr class="@RowClass(item.EnumStatus)">
-
-                            <td class="fw-600">
-
-                                @item.NomeAluno
-
+                        @* Tom de fundo sutil por status (verde/vermelho/amarelo) *@
+                        <tr class="border-b border-slate-50 last:border-0 @RowClass(item.EnumStatus)">
+                            <td class="px-5 py-4 font-semibold text-slate-800">@item.NomeAluno</td>
+                            <td class="px-5 py-4 text-slate-600">@item.NomeCurso</td>
+                            <td class="px-5 py-4 text-slate-600">@item.NumeroModulo.ToString("00") - @item.NomeModulo</td>
+                            <td class="px-5 py-4 text-slate-600">
+                                @(item.Nota.HasValue ? item.Nota.Value.ToString("0.0") : "—")
                             </td>
-
-                            <td>
-
-                                @item.NomeCurso
-
-                            </td>
-
-                            <td>
-
-                                @item.NumeroModulo.ToString("00")
-                                -
-                                @item.NomeModulo
-
-                            </td>
-
-                            <td>
-
-                                @(item.Nota.HasValue
-                                    ? item.Nota.Value.ToString("0.0")
-                                    : "—")
-
-                            </td>
-
-                            <td>
-
-                                <span class="status-badge @StatusClass(item.EnumStatus)">
-
+                            <td class="px-5 py-4">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold @StatusClass(item.EnumStatus)">
                                     @StatusText(item.EnumStatus)
-
                                 </span>
-
                             </td>
-
-                            <td>
-
-                                @item.DataInicio.ToString("dd/MM/yyyy")
-
+                            <td class="px-5 py-4 text-slate-600 whitespace-nowrap">@item.DataInicio.ToString("dd/MM/yyyy")</td>
+                            <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+                                @(item.DataFim.HasValue ? item.DataFim.Value.ToString("dd/MM/yyyy") : "—")
                             </td>
-
-                            <td>
-
-                                @(item.DataFim.HasValue
-                                    ? item.DataFim.Value.ToString("dd/MM/yyyy")
-                                    : "—")
-
-                            </td>
-
-                            <td class="text-end">
-
-                                <button type="button"
-                                        class="btn-icon"
-                                        title="Editar">
-
+                            <td class="px-5 py-4 text-right whitespace-nowrap">
+                                <button type="button" title="Editar"
+                                        class="p-2 rounded-lg text-slate-400 hover:bg-brand-light hover:text-brand transition-colors">
                                     <i class="bi bi-pencil"></i>
-
                                 </button>
-
-                                <button type="button"
-                                        class="btn-icon btn-icon-danger"
-                                        title="Excluir">
-
+                                <button type="button" title="Excluir"
+                                        class="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors">
                                     <i class="bi bi-trash"></i>
-
                                 </button>
-
                             </td>
-
                         </tr>
                     }
                 }
                 else
                 {
+                    @* Estado vazio: ocupa todas as colunas *@
                     <tr>
-
-                        <td colspan="8" class="empty-state">
-
-                            <i class="bi bi-inbox"></i>
-
-                            <span>
-
-                                Nenhuma inscrição encontrada.
-
-                            </span>
-
+                        <td colspan="8" class="text-center text-slate-400 py-16">
+                            <i class="bi bi-inbox text-4xl block mb-2"></i>
+                            <span>Nenhuma inscrição encontrada.</span>
                         </td>
-
                     </tr>
                 }
-
             </tbody>
-
         </table>
-
     </div>
-
 </div>
 
-@functions
+@* ===== Paginação =====
+   Só aparece quando há mais de uma página. Os links carregam os filtros ativos
+   (asp-all-route-data) + o número da página, para não perder o filtro ao navegar. *@
+@if (Model.TotalPaginas > 1)
 {
+    // Monta o dicionário de filtros ativos que será anexado a cada link de página.
+    var rotaFiltros = new Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.NomeAluno)) rotaFiltros["nomeAluno"] = Model.NomeAluno;
+    if (Model.CursoId.HasValue) rotaFiltros["cursoId"] = Model.CursoId.Value.ToString();
+    if (Model.ModuloId.HasValue) rotaFiltros["moduloId"] = Model.ModuloId.Value.ToString();
+    if (Model.StatusId.HasValue) rotaFiltros["statusId"] = Model.StatusId.Value.ToString();
+
+    // Janela de páginas mostradas (atual ± 2), sem estourar os limites.
+    var inicio = Math.Max(1, Model.PaginaAtual - 2);
+    var fim = Math.Min(Model.TotalPaginas, Model.PaginaAtual + 2);
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm">
+
+        <span class="text-slate-500">
+            @Model.TotalItems inscriçõe@(Model.TotalItems == 1 ? "" : "s") •
+            Página @Model.PaginaAtual de @Model.TotalPaginas
+        </span>
+
+        <nav class="flex items-center gap-1">
+
+            @* Botão anterior *@
+            @if (Model.TemPaginaAnterior)
+            {
+                <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual - 1)"
+                   class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            else
+            {
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            }
+
+            @* Números de página *@
+            @for (int p = inicio; p <= fim; p++)
+            {
+                if (p == Model.PaginaAtual)
+                {
+                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand text-white font-semibold">@p</span>
+                }
+                else
+                {
+                    <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@p"
+                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">@p</a>
+                }
+            }
+
+            @* Botão próxima *@
+            @if (Model.TemProximaPagina)
+            {
+                <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual + 1)"
+                   class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+            else
+            {
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+            }
+
+        </nav>
+    </div>
+}
+
+@* Helpers: traduzem o EnumStatus em texto e em classes Tailwind (badge/linha) *@
+@functions {
     string StatusText(EnumStatus status) => status switch
     {
         EnumStatus.Aprovado => "Aprovado",
@@ -260,20 +226,18 @@
 
     string StatusClass(EnumStatus status) => status switch
     {
-        EnumStatus.Aprovado => "badge-aprovado",
-        EnumStatus.Reprovado => "badge-reprovado",
-        EnumStatus.EmAndamento => "badge-andamento",
-        EnumStatus.Cancelado => "badge-cancelado",
-        _ => "badge-cancelado"
+        EnumStatus.Aprovado => "bg-green-100 text-green-700",
+        EnumStatus.Reprovado => "bg-red-100 text-red-600",
+        EnumStatus.EmAndamento => "bg-blue-100 text-blue-700",
+        EnumStatus.Cancelado => "bg-slate-100 text-slate-500",
+        _ => "bg-slate-100 text-slate-500"
     };
 
     string RowClass(EnumStatus status) => status switch
     {
-        EnumStatus.Aprovado => "row-aprovado",
-        EnumStatus.Reprovado => "row-reprovado",
-        EnumStatus.EmAndamento => "row-andamento",
+        EnumStatus.Aprovado => "bg-green-50",
+        EnumStatus.Reprovado => "bg-red-50",
+        EnumStatus.EmAndamento => "bg-amber-50",
         _ => ""
     };
 }
-```
-

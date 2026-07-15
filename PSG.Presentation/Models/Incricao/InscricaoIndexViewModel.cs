@@ -6,12 +6,24 @@ namespace PSG.Presentation.Models.Incricao
     public class InscricaoIndexViewModel
     {
         public List<InscricaoItemViewModel> Inscricoes { get; set; }
+
+        // Filtros selecionados (preservados no form e nos links de paginação)
+        public string? NomeAluno { get; set; }
         public int? CursoId { get; set; }
         public int? StatusId { get; set; }
         public int? ModuloId { get; set; }
+
+        // Opções dos dropdowns de filtro
         public List<SelectListItem> Cursos { get; set; }
         public List<SelectListItem> Status { get; set; }
         public List<SelectListItem> Modulos { get; set; }
+
+        // Dados de paginação (vindos do PagedResult do service)
+        public int PaginaAtual { get; set; }
+        public int TotalPaginas { get; set; }
+        public int TotalItems { get; set; }
+        public bool TemPaginaAnterior { get; set; }
+        public bool TemProximaPagina { get; set; }
     }
 
     public class InscricaoItemViewModel

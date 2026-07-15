@@ -1,89 +1,61 @@
-﻿@{
+@{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    // Itens do menu num array só para evitar repetir markup em cada link.
+    var navItems = new[]
+    {
+        new { Ctrl = "Home",         Icon = "bi-grid",         Label = "Dashboard" },
+        new { Ctrl = "Aluno",        Icon = "bi-person",       Label = "Alunos" },
+        new { Ctrl = "Inscricao",    Icon = "bi-journal-text", Label = "Inscrições" },
+        new { Ctrl = "Curso",        Icon = "bi-book",         Label = "Cursos" },
+        new { Ctrl = "Modulo",       Icon = "bi-collection",   Label = "Módulos" },
+        new { Ctrl = "Relatorio",    Icon = "bi-bar-chart",    Label = "Relatórios" },
+        new { Ctrl = "Configuracao", Icon = "bi-gear",         Label = "Configurações" }
+    };
+
+    // Classes reaproveitadas dos links (base + estados hover/ativo).
+    const string navBase = "nav-link flex items-center gap-4 px-4 py-3 rounded-xl transition-colors";
+    const string navInactive = "text-slate-600 hover:bg-brand-light hover:text-brand";
+    const string navActive = "bg-brand-light text-brand font-semibold";
 }
 
-<aside class="sidebar" id="sidebar">
+@* aside fixo; a LARGURA é controlada no site.css conforme o estado recolhido/expandido *@
+<aside id="sidebar" class="fixed left-0 top-0 h-screen bg-white border-r border-slate-200 flex flex-col z-20 overflow-hidden">
 
-    <div class="logo">
-
-        <div class="logo-content">
-            <i class="bi bi-mortarboard-fill"></i>
-            <span>PSG</span>
+    @* Cabeçalho: logo + botão de recolher/expandir *@
+    <div class="h-20 flex items-center justify-between px-5 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-3 overflow-hidden">
+            <i class="bi bi-mortarboard-fill text-brand text-3xl shrink-0"></i>
+            <span class="sidebar-label text-2xl font-bold text-brand whitespace-nowrap">PSG</span>
         </div>
-
-        <button id="toggleSidebar" class="sidebar-toggle">
-            <i class="bi bi-list"></i>
+        <button id="toggleSidebar" type="button"
+                class="shrink-0 p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                title="Recolher menu">
+            <i class="bi bi-list text-xl"></i>
         </button>
-
     </div>
 
-    <ul>
-
-        <li class="@(controller == "Home" ? "active" : "")">
-            <a asp-controller="Home" asp-action="Index">
-                <i class="bi bi-grid"></i>
-                <span>Dashboard</span>
+    @* Navegação *@
+    <nav class="flex-1 py-6 px-3 space-y-1 overflow-y-auto overflow-x-hidden">
+        @foreach (var item in navItems)
+        {
+            var isActive = controller == item.Ctrl;
+            <a asp-controller="@item.Ctrl" asp-action="Index"
+               title="@item.Label"
+               class="@navBase @(isActive ? navActive : navInactive)">
+                <i class="bi @item.Icon text-xl shrink-0"></i>
+                <span class="sidebar-label whitespace-nowrap">@item.Label</span>
             </a>
-        </li>
-
-        <li class="@(controller == "Aluno" ? "active" : "")">
-            <a asp-controller="Aluno" asp-action="Index">
-                <i class="bi bi-person"></i>
-                <span>Alunos</span>
-            </a>
-        </li>
-
-        <li class="@(controller == "Inscricao" ? "active" : "")">
-            <a asp-controller="Inscricao" asp-action="Index">
-                <i class="bi bi-journal-text"></i>
-                <span>Inscrições</span>
-            </a>
-        </li>
-
-        <li class="@(controller == "Curso" ? "active" : "")">
-            <a asp-controller="Curso" asp-action="Index">
-                <i class="bi bi-book"></i>
-                <span>Cursos</span>
-            </a>
-        </li>
-
-        <li class="@(controller == "Modulo" ? "active" : "")">
-            <a asp-controller="Modulo" asp-action="Index">
-                <i class="bi bi-collection"></i>
-                <span>Módulos</span>
-            </a>
-        </li>
-
-        <li class="@(controller == "Relatorio" ? "active" : "")">
-            <a asp-controller="Relatorio" asp-action="Index">
-                <i class="bi bi-bar-chart"></i>
-                <span>Relatórios</span>
-            </a>
-        </li>
-
-        <li class="@(controller == "Configuracao" ? "active" : "")">
-            <a asp-controller="Configuracao" asp-action="Index">
-                <i class="bi bi-gear"></i>
-                <span>Configurações</span>
-            </a>
-        </li>
-
-    </ul>
+        }
+    </nav>
 
 </aside>
 
 <script>
-
-    const sidebar=document.getElementById("sidebar");
-
-    const btn=document.getElementById("toggleSidebar");
-
-    btn.addEventListener("click",()=>{
-
-        sidebar.classList.toggle("collapsed");
-
-        document.body.classList.toggle("sidebar-collapsed");
-
+    // Recolher/expandir a sidebar. O estado fica em html.sidebar-collapsed
+    // (o _Layout já restaura essa classe antes do paint) e é salvo no localStorage.
+    document.getElementById("toggleSidebar").addEventListener("click", function () {
+        var collapsed = document.documentElement.classList.toggle("sidebar-collapsed");
+        localStorage.setItem("sidebarCollapsed", collapsed);
     });
-
 </script>

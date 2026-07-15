@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PSG.Application.Servicos.Csv;
 using PSG.Presentation.Models;
 using System.Diagnostics;
 
@@ -7,13 +8,15 @@ namespace PSG.Presentation.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly CsvImporterService csvImporterService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, CsvImporterService csvImporterService)
         {
             _logger = logger;
+            this.csvImporterService = csvImporterService;
         }
 
-        public IActionResult Index()
+        public IActionResult Index()    
         {
             return View();
         }

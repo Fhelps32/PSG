@@ -27,7 +27,13 @@ namespace PSG.Application.Servicos.AlunoModulos
             EnumStatus? status = null
             )
         {
-            var query = _context.AlunoModulos.AsQueryable();
+            // Include das navegações: sem lazy loading, Aluno/Modulo/Curso viriam nulos
+            // e a projeção na Presentation (NomeAluno, NomeCurso, etc.) quebraria.
+            var query = _context.AlunoModulos
+                .Include(am => am.Aluno)
+                .Include(am => am.Modulo)
+                    .ThenInclude(m => m.Curso)
+                .AsQueryable();
             query = query.Where(am => am.Status == true);
             if (idCurso.HasValue)
             {
