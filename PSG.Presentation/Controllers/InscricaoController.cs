@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PSG.Application.Servicos.AlunoModulos;
+using PSG.Application.Servicos.Alunos;
 using PSG.Application.Servicos.Csv;
 using PSG.Application.Servicos.Cursos;
+using PSG.Application.Servicos.Modulos;
+using PSG.Domain;
 using PSG.Domain.Enum;
 using PSG.Presentation.Models.Incricao;
 
@@ -13,12 +16,22 @@ namespace PSG.Presentation.Controllers
         private readonly CursoService cursoService;
         private readonly CsvImporterService csvImporterService;
         private readonly AlunoModuloService alunoModuloService;
+        private readonly ModuloService moduloService;
+        private readonly AlunoService alunoService;
 
-        public InscricaoController(CursoService cursoService, CsvImporterService csvImporterService, AlunoModuloService alunoModuloService)
+        public InscricaoController(
+            CursoService cursoService, 
+            CsvImporterService csvImporterService, 
+            AlunoModuloService alunoModuloService,
+            ModuloService moduloService,
+            AlunoService alunoService
+        )
         {
             this.cursoService = cursoService;
             this.csvImporterService = csvImporterService;
             this.alunoModuloService = alunoModuloService;
+            this.moduloService = moduloService;
+            this.alunoService = alunoService;
         }
 
         public async Task<IActionResult> IndexAsync(
@@ -28,17 +41,15 @@ namespace PSG.Presentation.Controllers
             int? moduloId = null,
             int? statusId = null)
         {
-            // O form manda o status como int; converte para o enum do domínio.
             EnumStatus? status = statusId.HasValue ? (EnumStatus)statusId.Value : null;
 
-            // Busca paginada + filtrada no service.
-            // Obs.: o service ainda não filtra por módulo (recebe nomeModulo, não idModulo), então passamos null.
             var resultado = await alunoModuloService.ObterInscricoesFiltradasPaginadoAsync(
                 pagina,
                 nomeAluno: nomeAluno,
                 nomeModulo: null,
                 idCurso: cursoId,
-                status: status);
+                status: status
+            );
 
             var model = new InscricaoIndexViewModel
             {
@@ -61,7 +72,6 @@ namespace PSG.Presentation.Controllers
                 ModuloId = moduloId,
                 StatusId = statusId,
 
-                // Dropdowns de filtro
                 Cursos = (await cursoService.GetAllCursosAsync())
                     .Select(c => new SelectListItem
                     {
@@ -76,10 +86,13 @@ namespace PSG.Presentation.Controllers
                         Text = TraduzirStatus(s)
                     }).ToList(),
 
-                // Módulo: dropdown vazio por enquanto (service ainda não filtra por módulo)
-                Modulos = new List<SelectListItem>(),
+                Modulos = (await moduloService.ObterModulosPorCursoAsync(cursoId ?? 0))
+                    .Select(m => new SelectListItem
+                    {
+                        Value = m.IdModulo.ToString(),
+                        Text = m.Nome
+                    }).ToList(),
 
-                // Dados de paginação vindos do PagedResult
                 PaginaAtual = resultado.PaginaAtual,
                 TotalPaginas = resultado.TotalPaginas,
                 TotalItems = resultado.TotalItems,
@@ -88,6 +101,40 @@ namespace PSG.Presentation.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateModal()
+        {
+            var alunos = await alunoService.ObterTodosAlunosAsync();
+            var cursos = await cursoService.GetAllCursosAsync();
+            var model = new InscricaoCreateViewModel
+            {
+                Alunos = alunos.Select(a => new SelectListItem
+                {
+                    Value = a.IdAluno.ToString(),
+                    Text = a.Nome
+                }).ToList(),
+
+                Cursos = cursos.Select(c => new SelectListItem
+                {
+                    Value = c.IdCurso.ToString(),
+                    Text = c.Nome
+                }).ToList()
+            };
+            return PartialView("_CreateInscricaoModalPartial", model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetModulosPorCursoModal(int cursoId)
+        {
+            var modulos = await moduloService.ObterModulosPorCursoAsync(cursoId);
+            var lista = modulos.Select(m => new
+            {
+                value = m.IdModulo,
+                text = $"{m.Numero:00} - {m.Nome}"
+            });
+            return Json(lista);
         }
 
         // Texto amigável do status para o dropdown de filtro

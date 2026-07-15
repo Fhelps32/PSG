@@ -11,7 +11,7 @@
         <p class="text-slate-500 text-sm mt-1">Acompanhamento dos alunos por módulo</p>
     </div>
 
-    <button type="button"
+    <button type="button" id="btnNovaInscricao"
             class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors">
         <i class="bi bi-plus-lg"></i>
         Nova inscrição
@@ -70,6 +70,79 @@
 
     </form>
 </div>
+
+@* ===== Paginação =====
+   Só aparece quando há mais de uma página. Os links carregam os filtros ativos
+   (asp-all-route-data) + o número da página, para não perder o filtro ao navegar. *@
+@if (Model.TotalPaginas > 1)
+{
+    // Monta o dicionário de filtros ativos que será anexado a cada link de página.
+    var rotaFiltros = new Dictionary<string, string>();
+    if (!string.IsNullOrEmpty(Model.NomeAluno)) rotaFiltros["nomeAluno"] = Model.NomeAluno;
+    if (Model.CursoId.HasValue) rotaFiltros["cursoId"] = Model.CursoId.Value.ToString();
+    if (Model.ModuloId.HasValue) rotaFiltros["moduloId"] = Model.ModuloId.Value.ToString();
+    if (Model.StatusId.HasValue) rotaFiltros["statusId"] = Model.StatusId.Value.ToString();
+
+    // Janela de páginas mostradas (atual ± 2), sem estourar os limites.
+    var inicio = Math.Max(1, Model.PaginaAtual - 2);
+    var fim = Math.Min(Model.TotalPaginas, Model.PaginaAtual + 2);
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm p-3">
+
+        <span class="text-slate-500">
+            @Model.TotalItems inscriçõe@(Model.TotalItems == 1 ? "" : "s") •
+            Página @Model.PaginaAtual de @Model.TotalPaginas
+        </span>
+
+        <nav class="flex items-center gap-1">
+
+            @* Botão anterior *@
+            @if (Model.TemPaginaAnterior)
+            {
+                <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual - 1)"
+                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            else
+            {
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            }
+
+            @* Números de página *@
+            @for (int p = inicio; p <= fim; p++)
+            {
+                if (p == Model.PaginaAtual)
+                {
+                    <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand text-white font-semibold">@p</span>
+                }
+                else
+                {
+                    <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@p"
+                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">@p</a>
+                }
+            }
+
+            @* Botão próxima *@
+            @if (Model.TemProximaPagina)
+            {
+                <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual + 1)"
+                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+            else
+            {
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+            }
+
+        </nav>
+    </div>
+}
 
 @* ===== Card da tabela =====
    overflow-hidden no card só arredonda as bordas; o scroll horizontal fica
@@ -219,7 +292,7 @@
     {
         EnumStatus.Aprovado => "Aprovado",
         EnumStatus.Reprovado => "Reprovado",
-        EnumStatus.EmAndamento => "Em Andamento",
+        EnumStatus.EmAndamento => "Andamento",
         EnumStatus.Cancelado => "Cancelado",
         _ => status.ToString()
     };
@@ -240,4 +313,100 @@
         EnumStatus.EmAndamento => "bg-amber-50",
         _ => ""
     };
+}
+
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script>
+        const modalContainer = document.getElementById('modalContainer');
+
+        document.getElementById('btnNovaInscricao').addEventListener('click', async () => {
+            const resp = await fetch('/Inscricao/CreateModal');
+            if (!resp.ok) {
+                alert('Não foi possível carregar o formulário.');
+                return;
+            }
+            modalContainer.innerHTML = await resp.text();
+            document.body.classList.add('overflow-hidden'); // trava o scroll da página atrás da modal
+            vincularEventosModal();
+        });
+
+        function fecharModal() {
+            modalContainer.innerHTML = '';
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function vincularEventosModal() {
+            const selectCurso = document.getElementById('selectCursoModal');
+            const selectModulo = document.getElementById('selectModuloModal');
+            const form = document.getElementById('formNovaInscricao');
+
+            document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
+            document.getElementById('btnCancelarModal').addEventListener('click', fecharModal);
+            document.getElementById('modalBackdrop').addEventListener('click', fecharModal);
+
+            // Fecha com ESC
+            document.addEventListener('keydown', function escHandler(e) {
+                if (e.key === 'Escape') {
+                    fecharModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            });
+
+            // Cascata Curso -> Módulo
+            selectCurso.addEventListener('change', async () => {
+                selectModulo.innerHTML = '<option value="">Carregando...</option>';
+                selectModulo.disabled = true;
+
+                const cursoId = selectCurso.value;
+                if (!cursoId) {
+                    selectModulo.innerHTML = '<option value="">Selecione o curso primeiro</option>';
+                    return;
+                }
+
+                const resp = await fetch(`/Inscricao/GetModulosPorCursoModal?cursoId=${cursoId}`);
+                const modulos = await resp.json();
+
+                selectModulo.innerHTML = '<option value="">Selecione...</option>';
+                modulos.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.value;
+                    opt.textContent = m.text;
+                    selectModulo.appendChild(opt);
+                });
+                selectModulo.disabled = false;
+            });
+
+            // Submit via AJAX
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const erroGeral = document.getElementById('erroGeralInscricao');
+                erroGeral.classList.add('hidden');
+
+                const btnSalvar = document.getElementById('btnSalvarInscricao');
+                btnSalvar.disabled = true;
+
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
+                if (resp.ok) {
+                    location.reload();
+                    return;
+                }
+
+                if (resp.status === 400) {
+                    modalContainer.innerHTML = await resp.text();
+                    vincularEventosModal();
+                } else {
+                    erroGeral.textContent = 'Erro inesperado ao salvar. Tente novamente.';
+                    erroGeral.classList.remove('hidden');
+                    btnSalvar.disabled = false;
+                }
+            });
+        }
+    </script>
 }

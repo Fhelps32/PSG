@@ -56,5 +56,11 @@ namespace PSG.Application.Servicos.Modulos
             var result = await query.Paginar<Modulo>(new PaginationRequest { NumeroPagina = pagina, TamanhoPagina = 20 });
             return result;
         }
+
+        public async Task<List<Modulo>> ObterModulosPorCursoAsync(int idCurso)
+        {
+            var modulos = await _context.Modulos.Where(m => m.IdCurso == idCurso).ToListAsync();
+            return modulos;
+        }
     }
 }

@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using PSG.Application.Context;
 using PSG.Application.Interfaces;
 using PSG.Application.Servicos.AlunoModulos;
+using PSG.Application.Servicos.Alunos;
 using PSG.Application.Servicos.Csv;
 using PSG.Application.Servicos.Cursos;
+using PSG.Application.Servicos.Modulos;
 using PSG.Domain;
 using PSG.Infra.Data;
 using PSG.Infra.Data.Csv;
@@ -28,7 +30,8 @@ namespace PSG.CrossCuting
             services.AddScoped<CsvImporterService>();
             services.AddScoped<AlunoModuloService>();
             services.AddScoped<CursoService>();
-            services.AddScoped<AlunoModuloService>();
+            services.AddScoped<ModuloService>();
+            services.AddScoped<AlunoService>();
 
             return services;
         }
