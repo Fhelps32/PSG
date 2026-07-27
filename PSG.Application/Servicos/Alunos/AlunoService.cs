@@ -13,7 +13,7 @@ namespace PSG.Application.Servicos.Alunos
             _context = context;
         }
 
-        public async Task<AlunoDto> ObterAlunoPorIdAsync(int idAluno)
+        public async Task<Aluno> ObterAlunoPorIdAsync(int idAluno)
         {
             var aluno = await _context.Alunos.FindAsync(idAluno);
             if (aluno == null)
@@ -21,14 +21,7 @@ namespace PSG.Application.Servicos.Alunos
                 throw new Exception($"Aluno com ID {idAluno} não encontrado.");
             }
 
-            var alunoDto = new AlunoDto(
-                aluno.IdAluno,
-                aluno.IdCurso,
-                aluno.Matricula,
-                aluno.Nome
-            );
-
-            return alunoDto;
+            return aluno;
         }
 
         public async Task<AlunoDto> ObterAlunoPorMatriculaAsync(string matricula)

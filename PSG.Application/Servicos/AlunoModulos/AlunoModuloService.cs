@@ -20,11 +20,12 @@ namespace PSG.Application.Servicos.AlunoModulos
             _context = context;
         }
 
-        public async Task<PagedResult<AlunoModulo>> ObterInscricoesFiltradasPaginadoAsync(int pagina, 
-            string? nomeAluno = null, 
-            string? nomeModulo = null, 
+        public async Task<PagedResult<AlunoModulo>> ObterInscricoesFiltradasPaginadoAsync(int pagina,
+            string? nomeAluno = null,
+            string? nomeModulo = null,
             int? idCurso = null,
-            EnumStatus? status = null
+            EnumStatus? status = null,
+            int? idModulo = null
             )
         {
             // Include das navegações: sem lazy loading, Aluno/Modulo/Curso viriam nulos
@@ -38,6 +39,10 @@ namespace PSG.Application.Servicos.AlunoModulos
             if (idCurso.HasValue)
             {
                 query = query.Where(am => am.Modulo.IdCurso == idCurso.Value);
+            }
+            if (idModulo.HasValue)
+            {
+                query = query.Where(am => am.IdModulo == idModulo.Value);
             }
             if (status.HasValue)
             {
@@ -60,6 +65,21 @@ namespace PSG.Application.Servicos.AlunoModulos
                 .Where(am => am.Status == true)
                 .ToListAsync();
             return result;
+        }
+
+        public async Task<AlunoModulo> CreateAlunoModuloAsync(AlunoModuloDtoCriar dto)
+        {
+            try
+            {
+                var alunoModulo = new AlunoModulo(dto.Aluno, dto.Modulo, dto.DataInicio, dto.EnumStatus, dto.DataFim);
+                await _context.AlunoModulos.AddAsync(alunoModulo);
+                await _context.SaveChangesAsync();
+                return alunoModulo;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Não foi possível criar a inscrição. Exepcion: {ex}");
+            }
         }
     }
 }

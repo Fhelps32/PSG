@@ -408,5 +408,37 @@
                 }
             });
         }
+
+        // ===== Cascata Curso -> Módulo no FILTRO (mesma ideia da modal) =====
+        // Ao trocar o curso no filtro, busca via AJAX os módulos daquele curso e
+        // preenche o dropdown de módulo, mantendo "Todos" como primeira opção.
+        (function () {
+            const filtroCurso = document.getElementById('CursoId');
+            const filtroModulo = document.getElementById('ModuloId');
+            if (!filtroCurso || !filtroModulo) return;
+
+            filtroCurso.addEventListener('change', async () => {
+                const cursoId = filtroCurso.value;
+
+                // Sem curso selecionado: volta o módulo para "Todos"
+                if (!cursoId) {
+                    filtroModulo.innerHTML = '<option value="">Todos</option>';
+                    return;
+                }
+
+                filtroModulo.innerHTML = '<option value="">Carregando...</option>';
+
+                const resp = await fetch(`/Inscricao/GetModulosPorCursoModal?cursoId=${cursoId}`);
+                const modulos = await resp.json();
+
+                filtroModulo.innerHTML = '<option value="">Todos</option>';
+                modulos.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.value;
+                    opt.textContent = m.text;
+                    filtroModulo.appendChild(opt);
+                });
+            });
+        })();
     </script>
 }

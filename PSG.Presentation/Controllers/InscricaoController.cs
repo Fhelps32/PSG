@@ -48,7 +48,8 @@ namespace PSG.Presentation.Controllers
                 nomeAluno: nomeAluno,
                 nomeModulo: null,
                 idCurso: cursoId,
-                status: status
+                status: status,
+                idModulo: moduloId
             );
 
             var model = new InscricaoIndexViewModel
@@ -86,11 +87,13 @@ namespace PSG.Presentation.Controllers
                         Text = TraduzirStatus(s)
                     }).ToList(),
 
+                // Módulos do curso filtrado (vazio se nenhum curso selecionado).
+                // Mesmo formato "00 - Nome" usado no cascata AJAX, para não haver diferença visual.
                 Modulos = (await moduloService.ObterModulosPorCursoAsync(cursoId ?? 0))
                     .Select(m => new SelectListItem
                     {
                         Value = m.IdModulo.ToString(),
-                        Text = m.Nome
+                        Text = $"{m.Numero:00} - {m.Nome}"
                     }).ToList(),
 
                 PaginaAtual = resultado.PaginaAtual,
@@ -135,6 +138,35 @@ namespace PSG.Presentation.Controllers
                 text = $"{m.Numero:00} - {m.Nome}"
             });
             return Json(lista);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(InscricaoCreateViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Devolve a modal de novo, mas com status 400 — o JS trata 400 como
+                // "erros no formulário" e re-renderiza a modal com as mensagens de validação.
+                // (Antes retornava 200, então o front dava reload e perdia os erros.)
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return PartialView("_CreateInscricaoModalPartial", viewModel);
+            }
+
+            var dto = new AlunoModuloDtoCriar(
+                await alunoService.ObterAlunoPorIdAsync(viewModel.AlunoId),
+                await moduloService.ObterModuloPorIdAsync(viewModel.ModuloId),
+                viewModel.StatusInscricao,
+                viewModel.DataAcesso,
+                null
+            );
+
+            await alunoModuloService.CreateAlunoModuloAsync(dto);
+
+            // Sucesso: 200 OK. O front faz location.reload() para exibir a nova inscrição.
+            // (Antes fazia RedirectToAction("IndexAsync"); porém, por convenção, o nome da
+            //  action é "Index" — o fetch seguia o redirect para /Inscricao/IndexAsync, que
+            //  retorna 404, gerando o "falso erro" mesmo com a inscrição já criada.)
+            return Ok();
         }
 
         // Texto amigável do status para o dropdown de filtro
