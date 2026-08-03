@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PSG.Application.Context;
+using PSG.Application.Servicos.Shared;
 using PSG.Domain;
 
 namespace PSG.Application.Servicos.Alunos
@@ -67,20 +68,14 @@ namespace PSG.Application.Servicos.Alunos
             return alunoDto;
         }
 
-        public async Task<IEnumerable<AlunoDto>> ObterAlunosPorCursoAsync(int idCurso)
+        public async Task<PagedResult<Aluno>> ObterAlunosPorCursoAsync(int idCurso, int pagina)
         {
-            var alunos = await _context.Alunos
+            var query = _context.Alunos
                 .Where(a => a.IdCurso == idCurso)
-                .Select(a => new AlunoDto(
-                    a.IdAluno,
-                    a.IdCurso,
-                    a.Matricula,
-                    a.Nome
-                ))
-                .ToListAsync();
-            return alunos;
+                .AsQueryable();
+            var result = await query.Paginar<Aluno>(new PaginationRequest { NumeroPagina = pagina, TamanhoPagina = 20 });
+            return result;
         }
-
         public async Task<AlunoDto> CriarAlunoAsync(AlunoDtoCriar alunoDto)
         {
             var curso = await _context.Cursos.FindAsync(alunoDto.IdCurso);
