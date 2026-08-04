@@ -1,0 +1,280 @@
+﻿@using PSG.Presentation.Models.DashBoard
+@model DashBoardVM
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@* ===== Cabeçalho da página ===== *@
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-800">Dashboard</h1>
+    <p class="text-slate-500 text-sm mt-1">Visão geral de alunos, cursos e desempenho</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+
+    @* ===================== COLUNA ESQUERDA ===================== *@
+    <div class="flex flex-col gap-6">
+
+        @* ----- Card: totais + destaques de curso ----- *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+
+            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total de Alunos</p>
+                    <p class="text-3xl font-bold text-slate-800 mt-1">@Model.TotalAlunos</p>
+                </div>
+                <a asp-controller="Curso" asp-action="Index"
+                       class="inline-flex items-center gap-1.5 bg-brand-light text-brand px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-brand hover:text-white transition-colors whitespace-nowrap">
+                    <i class="bi bi-mortarboard"></i>
+                    Dashboard de Cursos
+                </a>
+            </div>
+
+            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total de Cursos</p>
+                    <p class="text-3xl font-bold text-slate-800 mt-1">@Model.TotalCursos</p>
+                </div>
+                <a asp-controller="Curso" asp-action="Index"
+                       class="inline-flex items-center gap-1.5 bg-brand-light text-brand px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-brand hover:text-white transition-colors whitespace-nowrap">
+                    <i class="bi bi-mortarboard"></i>
+                    Dashboard de Cursos
+                </a>
+            </div>
+
+            @* Curso com maior cancelamento / maior reprovação, lado a lado *@
+            <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                <div class="px-6 py-5">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                        <i class="bi bi-x-octagon text-red-500 mr-1"></i>
+                        Curso com maior taxa de cancelamento
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.CursoMaiorCancelamento?.Curso))
+                    {
+                        <p class="text-lg font-bold text-slate-800">@Model.CursoMaiorCancelamento.Curso</p>
+                        <p class="text-sm text-red-600 font-semibold mt-1">@(Model.CursoMaiorCancelamento.Taxa)% de cancelamento</p>
+                        <p class="text-xs text-slate-400 mt-1">
+                            @(Model.CursoMaiorCancelamento.QuantidadeAlunosImportancia) de @(Model.CursoMaiorCancelamento.QuantidadeAlunosTotal) alunos
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-sm text-slate-400">Sem dados disponíveis</p>
+                    }
+                </div>
+                <div class="px-6 py-5">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                        <i class="bi bi-emoji-frown text-amber-500 mr-1"></i>
+                        Curso com maior taxa de reprovação
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.CursoMaiorReprovacao?.Curso))
+                    {
+                        <p class="text-lg font-bold text-slate-800">@Model.CursoMaiorReprovacao.Curso</p>
+                        <p class="text-sm text-amber-600 font-semibold mt-1">@(Model.CursoMaiorReprovacao.Taxa)% de reprovação</p>
+                        <p class="text-xs text-slate-400 mt-1">
+                            @(Model.CursoMaiorReprovacao.QuantidadeAlunosImportancia) de @(Model.CursoMaiorReprovacao.QuantidadeAlunosTotal) alunos
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-sm text-slate-400">Sem dados disponíveis</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* ----- Card: gráfico em linha (histórico de alunos) ----- *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800">Histórico de Alunos</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Evolução da quantidade de alunos ao longo do tempo</p>
+                </div>
+                <div class="flex gap-2">
+                    <select id="selectTempoLinha"
+                            asp-items="Model.LineGraphSection.Tempo"
+                            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                        <option value="">Período</option>
+                    </select>
+                    <select id="selectCursoLinha"
+                            asp-items="Model.LineGraphSection.Cursos"
+                            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                        <option value="">Todos os cursos</option>
+                    </select>
+                </div>
+            </div>
+            <div class="h-72">
+                <canvas id="lineGraphAlunos"></canvas>
+            </div>
+        </div>
+    </div>
+
+    @* ===================== COLUNA DIREITA ===================== *@
+    <div class="flex flex-col gap-6">
+
+        <a asp-controller="Inscricao" asp-action="Index"
+               class="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-brand hover:text-brand text-slate-700 px-4 py-3 rounded-xl text-sm font-semibold shadow-sm transition-colors">
+            <i class="bi bi-journal-bookmark"></i>
+            Ir para Inscrições
+        </a>
+
+        <button type="button" id="btnGerarRelatorio"
+                class="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-3 rounded-xl text-sm font-semibold shadow-sm transition-colors">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            Gerar Relatório
+        </button>
+
+        @* ----- Card: gráfico de pizza ----- *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-bold text-slate-800">Alunos por Curso</h2>
+                <select id="selectCursoPizza"
+                        asp-items="Model.SectorGraphSection.Cursos"
+                        class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="h-48">
+                <canvas id="pieGraphCursos"></canvas>
+            </div>
+        </div>
+
+        @* ----- Card: alunos cancelados recentemente ----- *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+            <h2 class="text-sm font-bold text-slate-800 mb-3">Alunos Cancelados Recentemente</h2>
+            <div class="flex flex-col divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                @if (Model.AlunosCancelados != null && Model.AlunosCancelados.Any())
+                {
+                    foreach (var aluno in Model.AlunosCancelados)
+                    {
+                        <div class="py-3 first:pt-0 last:pb-0">
+                            <p class="text-sm font-semibold text-slate-800">@aluno.Nome</p>
+                            <p class="text-xs text-slate-500 mt-0.5">@aluno.Curso &bull; @aluno.Modulo</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Cancelado em @aluno.DataCancelamento.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-slate-400 py-8">
+                        <i class="bi bi-inbox text-3xl block mb-2"></i>
+                        <span class="text-xs">Nenhum cancelamento recente.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+    <script>
+        // ===== Dados vindos do model para os gráficos =====
+        // Formatados aqui e não recalculados no cliente, pra manter a mesma fonte de verdade do backend.
+        const lineLabels = [
+        @foreach (var ponto in Model.LineGraphSection.ValueLineGraph)
+        {
+            @:"@ponto.Data.ToString("dd/MM")",
+        }
+        ];
+        const lineData = [
+        @foreach (var ponto in Model.LineGraphSection.ValueLineGraph)
+        {
+            @:@(ponto.QuantidadeAlunos),
+        }
+        ];
+
+        const pieLabels = [
+        @foreach (var fatia in Model.SectorGraphSection.ValueSectorGraph)
+        {
+            @:"@fatia.Curso - @fatia.Modulo",
+        }
+        ];
+        const pieData = [
+        @foreach (var fatia in Model.SectorGraphSection.ValueSectorGraph)
+        {
+            @:@(fatia.QuantidadeAlunos),
+        }
+        ];
+
+        // ===== Gráfico em linha: histórico de alunos =====
+        new Chart(document.getElementById('lineGraphAlunos'), {
+        type: 'line',
+        data: {
+        labels: lineLabels,
+        datasets: [{
+        label: 'Alunos',
+        data: lineData,
+        borderColor: '#c96442',
+        backgroundColor: 'rgba(201, 100, 66, 0.12)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+        });
+
+        // ===== Gráfico de pizza: distribuição por curso/módulo =====
+        new Chart(document.getElementById('pieGraphCursos'), {
+        type: 'pie',
+        data: {
+        labels: pieLabels,
+        datasets: [{
+        data: pieData,
+        backgroundColor: ['#c96442', '#f2b774', '#7c9d96', '#5b7f9e', '#a68a64', '#94a3b8']
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+        }
+        });
+
+        // ===== Filtros do gráfico em linha =====
+        // Ao trocar período ou curso, reconsulta o backend e atualiza só o gráfico de linha.
+        // Ajuste a rota "/DashBoard/GetLineGraphData" para a action real do controller.
+        async function atualizarGraficoLinha() {
+        const tempo = document.getElementById('selectTempoLinha').value;
+        const curso = document.getElementById('selectCursoLinha').value;
+
+        const resp = await fetch(`/DashBoard/GetLineGraphData?tempo=${tempo}&cursoId=${curso}`);
+        if (!resp.ok) return;
+
+        const dados = await resp.json();
+        // dados esperado: [{ data: "2026-01-01", quantidadeAlunos: 10 }, ...]
+        const chart = Chart.getChart('lineGraphAlunos');
+        chart.data.labels = dados.map(d => new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
+        chart.update();
+        }
+
+        document.getElementById('selectTempoLinha').addEventListener('change', atualizarGraficoLinha);
+        document.getElementById('selectCursoLinha').addEventListener('change', atualizarGraficoLinha);
+
+        // ===== Filtro do gráfico de pizza =====
+        document.getElementById('selectCursoPizza').addEventListener('change', async () => {
+        const cursoId = document.getElementById('selectCursoPizza').value;
+        const resp = await fetch(`/DashBoard/GetPieGraphData?cursoId=${cursoId}`);
+        if (!resp.ok) return;
+
+        const dados = await resp.json();
+        // dados esperado: [{ curso: "...", modulo: "...", quantidadeAlunos: 5 }, ...]
+        const chart = Chart.getChart('pieGraphCursos');
+        chart.data.labels = dados.map(d => `${d.curso} - ${d.modulo}`);
+        chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
+        chart.update();
+        });
+
+        // ===== Gerar relatório =====
+        document.getElementById('btnGerarRelatorio').addEventListener('click', () => {
+        window.location.href = '/DashBoard/GerarRelatorio';
+        });
+    </script>
+}

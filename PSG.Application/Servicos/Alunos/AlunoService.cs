@@ -145,4 +145,10 @@ namespace PSG.Application.Servicos.Alunos
             _context.Alunos.Update(aluno);
             await _context.SaveChangesAsync();
         }
-}}
+
+        public async Task<int> ObterQuantidadeTotalAlunosAsync()
+        {
+            return await _context.Alunos.CountAsync();
+        }
+    }
+}
