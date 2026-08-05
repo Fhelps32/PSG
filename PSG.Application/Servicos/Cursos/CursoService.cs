@@ -1,4 +1,5 @@
-﻿using PSG.Application.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using PSG.Application.Context;
 using PSG.Domain;
 using System;
 using System.Collections.Generic;
@@ -17,9 +18,14 @@ namespace PSG.Application.Servicos.Cursos
             _context = context;
         }
 
-        public async Task<List<Curso>> GetAllCursosAsync()
+        public async Task<List<Curso>> ObterTodosOsCursosAsync()
         {
             return await Task.FromResult(_context.Cursos.ToList());
+        }
+
+        public async Task<int> ObterQuantidadeTotalCursosAsync()
+        {
+            return await _context.Cursos.CountAsync();
         }
     }
 }

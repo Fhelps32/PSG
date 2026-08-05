@@ -73,7 +73,7 @@ namespace PSG.Presentation.Controllers
                 ModuloId = moduloId,
                 StatusId = statusId,
 
-                Cursos = (await cursoService.GetAllCursosAsync())
+                Cursos = (await cursoService.ObterTodosOsCursosAsync())
                     .Select(c => new SelectListItem
                     {
                         Value = c.IdCurso.ToString(),
@@ -110,7 +110,7 @@ namespace PSG.Presentation.Controllers
         public async Task<IActionResult> CreateModal()
         {
             var alunos = await alunoService.ObterTodosAlunosAsync();
-            var cursos = await cursoService.GetAllCursosAsync();
+            var cursos = await cursoService.ObterTodosOsCursosAsync();
             var model = new InscricaoCreateViewModel
             {
                 Alunos = alunos.Select(a => new SelectListItem

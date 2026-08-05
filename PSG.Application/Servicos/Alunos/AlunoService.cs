@@ -79,7 +79,7 @@ namespace PSG.Application.Servicos.Alunos
         public async Task<AlunoDto> CriarAlunoAsync(AlunoDtoCriar alunoDto)
         {
             var curso = await _context.Cursos.FindAsync(alunoDto.IdCurso);
-            
+
             if (curso == null)
             {
                 throw new Exception($"Curso com ID {alunoDto.IdCurso} não encontrado.");
@@ -150,5 +150,23 @@ namespace PSG.Application.Servicos.Alunos
         {
             return await _context.Alunos.CountAsync();
         }
+
+        public async Task<int> ObterQuantidadeAlunosPorCursoAsync(int idCurso)
+        {
+            return await _context.Alunos.CountAsync(a => a.IdCurso == idCurso);
+        }
+
+        //TODO trocar o DataCadastro por DataMatricula que ainda vai ser implementado no Aluno
+        public async Task<AlunoQuantidadeDto> ObterQuantidadeAlunosPorMes(DateTime dataInicio)
+        {
+            var dataFim = dataInicio.AddMonths(1).AddDays(-1);
+            var quantidadeAlunos = await _context.Alunos
+                .Where(a => a.DataCadastro >= dataInicio && a.DataCadastro <= dataFim)
+                .CountAsync();
+            
+            return new AlunoQuantidadeDto(quantidadeAlunos, dataFim);
+        }
+
+
     }
 }

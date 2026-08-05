@@ -247,7 +247,7 @@
         const resp = await fetch(`/DashBoard/GetLineGraphData?tempo=${tempo}&cursoId=${curso}`);
         if (!resp.ok) return;
 
-        const dados = await resp.json();
+        const dados = await resp.json(); 
         // dados esperado: [{ data: "2026-01-01", quantidadeAlunos: 10 }, ...]
         const chart = Chart.getChart('lineGraphAlunos');
         chart.data.labels = dados.map(d => new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));

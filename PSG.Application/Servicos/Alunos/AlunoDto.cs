@@ -36,4 +36,9 @@ namespace PSG.Application.Servicos.Alunos
         decimal Nota,
         EnumStatus Status
     );
+
+    public sealed record AlunoQuantidadeDto(
+        int TotalAlunos,
+        DateTime DataRegistro
+    );
 }
