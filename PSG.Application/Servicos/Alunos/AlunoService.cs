@@ -151,16 +151,26 @@ namespace PSG.Application.Servicos.Alunos
             return await _context.Alunos.CountAsync();
         }
 
-        public async Task<int> ObterQuantidadeAlunosPorCursoAsync(int idCurso)
+        public async Task<AlunoQuantidadeCursoDto> ObterQuantidadeAlunosPorCursoAsync(int idCurso)
         {
-            return await _context.Alunos.CountAsync(a => a.IdCurso == idCurso);
+            var query = _context.Alunos.AsQueryable();
+            var quantidadeAlunos = await query
+                .Where(a => a.IdCurso == idCurso)
+                .CountAsync();
+            var nomeCurso = (await _context.Cursos.FindAsync(idCurso))?.Nome;
+            return new AlunoQuantidadeCursoDto(quantidadeAlunos, nomeCurso!, DateTime.Now);
         }
 
         //TODO trocar o DataCadastro por DataMatricula que ainda vai ser implementado no Aluno
-        public async Task<AlunoQuantidadeDto> ObterQuantidadeAlunosPorMes(DateTime dataInicio)
+        public async Task<AlunoQuantidadeDto> ObterQuantidadeAlunosPorMes(DateTime dataInicio, int? idCurso)
         {
             var dataFim = dataInicio.AddMonths(1).AddDays(-1);
-            var quantidadeAlunos = await _context.Alunos
+            var query = _context.Alunos.AsQueryable();
+            if (idCurso.HasValue)
+            {
+                query = query.Where(a => a.IdCurso == idCurso.Value);
+            }
+            var quantidadeAlunos = await query
                 .Where(a => a.DataCadastro >= dataInicio && a.DataCadastro <= dataFim)
                 .CountAsync();
             

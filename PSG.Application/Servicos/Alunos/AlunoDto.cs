@@ -41,4 +41,10 @@ namespace PSG.Application.Servicos.Alunos
         int TotalAlunos,
         DateTime DataRegistro
     );
+
+    public sealed record AlunoQuantidadeCursoDto(
+        int TotalAlunos,
+        string NomeCurso,
+        DateTime DataRegistro
+    );
 }

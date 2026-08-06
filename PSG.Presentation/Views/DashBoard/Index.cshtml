@@ -167,7 +167,7 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
     <script>
         // ===== Dados vindos do model para os gráficos =====
         // Formatados aqui e não recalculados no cliente, pra manter a mesma fonte de verdade do backend.
@@ -250,8 +250,8 @@
         const dados = await resp.json(); 
         // dados esperado: [{ data: "2026-01-01", quantidadeAlunos: 10 }, ...]
         const chart = Chart.getChart('lineGraphAlunos');
-        chart.data.labels = dados.map(d => new Date(d.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-        chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
+        chart.data.labels = dados.map(d => new Date(d.dataRegistro).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        chart.data.datasets[0].data = dados.map(d => d.totalAlunos);
         chart.update();
         }
 
