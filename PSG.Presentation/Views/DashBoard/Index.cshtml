@@ -269,7 +269,7 @@
         const chart = Chart.getChart('pieGraphCursos');
         chart.data.labels = dados.map(d => `${d.curso} - ${d.modulo}`);
         chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
-        chart.update();
+        chart.update(); 
         });
 
         // ===== Gerar relatório =====
