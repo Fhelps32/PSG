@@ -2,6 +2,7 @@
 using PSG.Application.Context;
 using PSG.Application.Servicos.Shared;
 using PSG.Domain;
+using PSG.Domain.Enum;
 
 namespace PSG.Application.Servicos.Alunos
 {
@@ -21,8 +22,7 @@ namespace PSG.Application.Servicos.Alunos
             {
                 throw new Exception($"Aluno com ID {idAluno} não encontrado.");
             }
-
-            return aluno;
+                return aluno;
         }
 
         public async Task<AlunoDto> ObterAlunoPorMatriculaAsync(string matricula)
@@ -161,20 +161,77 @@ namespace PSG.Application.Servicos.Alunos
             return new AlunoQuantidadeCursoDto(quantidadeAlunos, nomeCurso!, DateTime.Now);
         }
 
-        //TODO trocar o DataCadastro por DataMatricula que ainda vai ser implementado no Aluno
-        public async Task<AlunoQuantidadeDto> ObterQuantidadeAlunosPorMes(DateTime dataInicio, int? idCurso)
+        public async Task<List<AlunoQuantidadeCursoDto>> ObterQuantidadeAlunosPorCursoAsync()
         {
-            var dataFim = dataInicio.AddMonths(1).AddDays(-1);
+            var dados = await _context.Cursos
+                .OrderBy(c => c.Nome)
+                .Select(c => new { c.Nome, Total = c.Alunos.Count() })
+                .ToListAsync();
+
+            return dados
+                .Select(d => new AlunoQuantidadeCursoDto(d.Total, d.Nome, DateTime.Now))
+                .ToList();
+        }
+
+        public async Task<List<AlunoQuantidadeModuloDto>> ObterQuantidadeAlunosPorModuloAsync(int idCurso)
+        {
+            var dados = await _context.Modulos
+                .Where(m => m.IdCurso == idCurso)
+                .OrderBy(m => m.Numero)
+                .Select(m => new
+                {
+                    NomeCurso = m.Curso.Nome,
+                    NomeModulo = m.Nome,
+                    Total = m.Alunos.Count(am => am.Status)
+                })
+                .ToListAsync();
+
+            return dados
+                .Select(d => new AlunoQuantidadeModuloDto(d.Total, d.NomeCurso, d.NomeModulo))
+                .ToList();
+        }
+
+        // Não existe uma "DataCancelamento" na entidade: a conclusão é o momento em que a
+        // inscrição saiu do ar; quando ela não existe, o acesso é a melhor aproximação.
+        public async Task<List<AlunoCanceladoDto>> ObterAlunosCanceladosAsync(int quantidade = 10)
+        {
+            var dados = await _context.AlunoModulos
+                .Where(am => am.StatusInscricao == EnumStatus.Cancelado)
+                .OrderByDescending(am => am.DataConclusao ?? am.DataAcesso)
+                .Take(quantidade)
+                .Select(am => new
+                {
+                    am.Aluno.Nome,
+                    NomeCurso = am.Modulo.Curso.Nome,
+                    NomeModulo = am.Modulo.Nome,
+                    Data = am.DataConclusao ?? am.DataAcesso
+                })
+                .ToListAsync();
+
+            return dados
+                .Select(d => new AlunoCanceladoDto(d.Nome, d.NomeCurso, d.NomeModulo, d.Data))
+                .ToList();
+        }
+
+        //TODO trocar o DataCadastro por DataMatricula que ainda vai ser implementado no Aluno
+        public async Task<AlunoQuantidadeDto> ObterQuantidadeAlunosPorMes(DateTime mes, int? idCurso)
+        {
+            // Mês fechado: do dia 1 (inclusive) até o dia 1 do mês seguinte (exclusive).
+            // Antes usava a data recebida como início, então a janela era do dia X ao dia X-1
+            // do mês seguinte e os pontos não representavam meses de calendário.
+            var dataInicio = new DateTime(mes.Year, mes.Month, 1);
+            var dataFim = dataInicio.AddMonths(1);
+
             var query = _context.Alunos.AsQueryable();
             if (idCurso.HasValue)
             {
                 query = query.Where(a => a.IdCurso == idCurso.Value);
             }
             var quantidadeAlunos = await query
-                .Where(a => a.DataCadastro >= dataInicio && a.DataCadastro <= dataFim)
+                .Where(a => a.DataCadastro >= dataInicio && a.DataCadastro < dataFim)
                 .CountAsync();
-            
-            return new AlunoQuantidadeDto(quantidadeAlunos, dataFim);
+
+            return new AlunoQuantidadeDto(quantidadeAlunos, dataInicio);
         }
 
 

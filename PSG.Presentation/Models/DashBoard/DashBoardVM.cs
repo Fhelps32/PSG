@@ -7,8 +7,10 @@ namespace PSG.Presentation.Models.DashBoard
         public LineGraphSection LineGraphSection { get; set; } = new LineGraphSection();
         public SectorGraphSection SectorGraphSection { get; set; } = new SectorGraphSection();
         public List<AlunoCanceladoItem> AlunosCancelados { get; set; } = new List<AlunoCanceladoItem>();
-        public CursoImportanciaItem CursoMaiorCancelamento { get; set; } = new CursoImportanciaItem();
-        public CursoImportanciaItem CursoMaiorReprovacao { get; set; } = new CursoImportanciaItem();
+        // Nulos quando não há inscrição nenhuma no status correspondente — a view
+        // trata esse caso mostrando "Sem dados disponíveis".
+        public CursoImportanciaItem? CursoMaiorCancelamento { get; set; }
+        public CursoImportanciaItem? CursoMaiorReprovacao { get; set; }
         public int TotalAlunos { get; set; }
         public int TotalCursos { get; set; }
     }
@@ -42,7 +44,8 @@ namespace PSG.Presentation.Models.DashBoard
     {
         public int QuantidadeAlunos { get; set; }
         public string Curso { get; set; } = string.Empty;
-        public string Modulo { get; set; } = string.Empty;
+        // Só preenchido quando a pizza está detalhando os módulos de um curso.
+        public string? Modulo { get; set; }
     }
 
     public class AlunoCanceladoItem

@@ -91,10 +91,10 @@
                     <p class="text-xs text-slate-500 mt-0.5">Evolução da quantidade de alunos ao longo do tempo</p>
                 </div>
                 <div class="flex gap-2">
+                    @* Sem opção vazia: "tempo" é int no controller e um value="" viraria 400. *@
                     <select id="selectTempoLinha"
                             asp-items="Model.LineGraphSection.Tempo"
                             class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
-                        <option value="">Período</option>
                     </select>
                     <select id="selectCursoLinha"
                             asp-items="Model.LineGraphSection.Cursos"
@@ -167,14 +167,17 @@
 </div>
 
 @section Scripts {
-    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    @* O arquivo distribuído pelo pacote é lib/chart.js/dist/chart.umd.js.
+       O caminho antigo (lib/chart.js/chart.umd.min.js) não existe: dava 404 e
+       "Chart is not defined", derrubando todo este script — por isso nada aparecia. *@
+    <script src="~/lib/chart.js/dist/chart.umd.js" asp-append-version="true"></script>
     <script>
         // ===== Dados vindos do model para os gráficos =====
         // Formatados aqui e não recalculados no cliente, pra manter a mesma fonte de verdade do backend.
         const lineLabels = [
         @foreach (var ponto in Model.LineGraphSection.ValueLineGraph)
         {
-            @:"@ponto.Data.ToString("dd/MM")",
+            @:"@ponto.Data.ToString("MM/yyyy")",
         }
         ];
         const lineData = [
@@ -187,7 +190,7 @@
         const pieLabels = [
         @foreach (var fatia in Model.SectorGraphSection.ValueSectorGraph)
         {
-            @:"@fatia.Curso - @fatia.Modulo",
+            @:"@(string.IsNullOrEmpty(fatia.Modulo) ? fatia.Curso : $"{fatia.Curso} - {fatia.Modulo}")",
         }
         ];
         const pieData = [
@@ -196,6 +199,9 @@
             @:@(fatia.QuantidadeAlunos),
         }
         ];
+
+        // Rótulo de fatia: o módulo só existe quando a pizza detalha um curso.
+        const rotuloFatia = d => d.modulo ? `${d.curso} - ${d.modulo}` : d.curso;
 
         // ===== Gráfico em linha: histórico de alunos =====
         new Chart(document.getElementById('lineGraphAlunos'), {
@@ -239,7 +245,6 @@
 
         // ===== Filtros do gráfico em linha =====
         // Ao trocar período ou curso, reconsulta o backend e atualiza só o gráfico de linha.
-        // Ajuste a rota "/DashBoard/GetLineGraphData" para a action real do controller.
         async function atualizarGraficoLinha() {
         const tempo = document.getElementById('selectTempoLinha').value;
         const curso = document.getElementById('selectCursoLinha').value;
@@ -247,10 +252,10 @@
         const resp = await fetch(`/DashBoard/GetLineGraphData?tempo=${tempo}&cursoId=${curso}`);
         if (!resp.ok) return;
 
-        const dados = await resp.json(); 
-        // dados esperado: [{ data: "2026-01-01", quantidadeAlunos: 10 }, ...]
+        const dados = await resp.json();
+        // dados esperado: [{ totalAlunos: 10, dataRegistro: "2026-01-01T00:00:00" }, ...]
         const chart = Chart.getChart('lineGraphAlunos');
-        chart.data.labels = dados.map(d => new Date(d.dataRegistro).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        chart.data.labels = dados.map(d => new Date(d.dataRegistro).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }));
         chart.data.datasets[0].data = dados.map(d => d.totalAlunos);
         chart.update();
         }
@@ -265,11 +270,11 @@
         if (!resp.ok) return;
 
         const dados = await resp.json();
-        // dados esperado: [{ curso: "...", modulo: "...", quantidadeAlunos: 5 }, ...]
+        // dados esperado: [{ curso: "...", modulo: "..." | null, quantidadeAlunos: 5 }, ...]
         const chart = Chart.getChart('pieGraphCursos');
-        chart.data.labels = dados.map(d => `${d.curso} - ${d.modulo}`);
+        chart.data.labels = dados.map(rotuloFatia);
         chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
-        chart.update(); 
+        chart.update();
         });
 
         // ===== Gerar relatório =====

@@ -47,4 +47,17 @@ namespace PSG.Application.Servicos.Alunos
         string NomeCurso,
         DateTime DataRegistro
     );
+
+    public sealed record AlunoQuantidadeModuloDto(
+        int TotalAlunos,
+        string NomeCurso,
+        string NomeModulo
+    );
+
+    public sealed record AlunoCanceladoDto(
+        string Nome,
+        string NomeCurso,
+        string NomeModulo,
+        DateTime DataCancelamento
+    );
 }
