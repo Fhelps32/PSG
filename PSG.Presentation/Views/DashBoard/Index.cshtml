@@ -4,6 +4,17 @@
     ViewData["Title"] = "Dashboard";
 }
 
+@functions {
+    // Iniciais do aluno para o avatar da lista de cancelados (ex.: "Ana Maria Silva" -> "AS").
+    static string Iniciais(string? nome)
+    {
+        var partes = (nome ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0) return "?";
+        if (partes.Length == 1) return partes[0].Substring(0, 1).ToUpperInvariant();
+        return (partes[0].Substring(0, 1) + partes[^1].Substring(0, 1)).ToUpperInvariant();
+    }
+}
+
 @* ===== Cabeçalho da página ===== *@
 <div class="mb-6">
     <h1 class="text-3xl font-bold text-slate-800">Dashboard</h1>
@@ -124,40 +135,83 @@
             Gerar Relatório
         </button>
 
-        @* ----- Card: gráfico de pizza ----- *@
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-            <div class="flex items-center justify-between mb-3">
+        @* ----- Card: gráfico de setor -----
+           A legenda NÃO é mais desenhada pelo Chart.js dentro do canvas: com muitos
+           módulos ela consumia toda a altura e vazava do card. Agora o canvas tem
+           altura fixa e a legenda é HTML, numa lista com rolagem própria. *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h2 class="text-sm font-bold text-slate-800">Alunos por Curso</h2>
                 <select id="selectCursoPizza"
                         asp-items="Model.SectorGraphSection.Cursos"
-                        class="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                        class="max-w-full rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
                     <option value="">Todos</option>
                 </select>
             </div>
-            <div class="h-48">
+
+            <div class="h-44">
                 <canvas id="pieGraphCursos"></canvas>
+            </div>
+
+            @* Legenda em HTML: rola dentro do card quando há muitos módulos.
+               O contexto mostra o curso quando a legenda lista só os módulos dele. *@
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <p id="contextoPizza" class="hidden mb-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide truncate"></p>
+                <ul id="legendaPizza" class="max-h-44 overflow-y-auto pr-1 space-y-1"></ul>
             </div>
         </div>
 
-        @* ----- Card: alunos cancelados recentemente ----- *@
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-            <h2 class="text-sm font-bold text-slate-800 mb-3">Alunos Cancelados Recentemente</h2>
+        @* ----- Card: alunos cancelados recentemente -----
+           Seção destacada em vermelho (cabeçalho, borda e ícone) porque é o ponto
+           da tela que exige ação do usuário — antes se confundia com os demais cards. *@
+        <div class="bg-white border border-red-200 rounded-2xl shadow-sm overflow-hidden">
+
+            <div class="flex items-center gap-3 px-5 py-4 bg-red-50 border-b border-red-100">
+                <span class="w-9 h-9 shrink-0 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                    <i class="bi bi-person-dash text-lg"></i>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-sm font-bold text-red-800 leading-tight">Alunos Cancelados</h2>
+                    <p class="text-[11px] text-red-500 mt-0.5">Cancelamentos mais recentes</p>
+                </div>
+                @if (Model.AlunosCancelados != null && Model.AlunosCancelados.Any())
+                {
+                    <span class="shrink-0 inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 rounded-full bg-red-600 text-white text-xs font-bold">
+                        @Model.AlunosCancelados.Count
+                    </span>
+                }
+            </div>
+
             <div class="flex flex-col divide-y divide-slate-100 max-h-80 overflow-y-auto">
                 @if (Model.AlunosCancelados != null && Model.AlunosCancelados.Any())
                 {
                     foreach (var aluno in Model.AlunosCancelados)
                     {
-                        <div class="py-3 first:pt-0 last:pb-0">
-                            <p class="text-sm font-semibold text-slate-800">@aluno.Nome</p>
-                            <p class="text-xs text-slate-500 mt-0.5">@aluno.Curso &bull; @aluno.Modulo</p>
-                            <p class="text-xs text-slate-400 mt-0.5">Cancelado em @aluno.DataCancelamento.ToString("dd/MM/yyyy")</p>
+                        var dias = (int)(DateTime.Today - aluno.DataCancelamento.Date).TotalDays;
+                        var quando = dias <= 0 ? "hoje" : dias == 1 ? "ontem" : $"há {dias} dias";
+                        var origem = string.IsNullOrWhiteSpace(aluno.Modulo)
+                            ? aluno.Curso
+                            : $"{aluno.Curso} • {aluno.Modulo}";
+
+                        <div class="flex items-start gap-3 px-5 py-3 border-l-[3px] border-transparent hover:border-red-500 hover:bg-red-50/60 transition-colors">
+                            <span class="w-8 h-8 shrink-0 rounded-full bg-red-100 text-red-700 text-[11px] font-bold flex items-center justify-center">
+                                @Iniciais(aluno.Nome)
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-semibold text-slate-800 truncate" title="@aluno.Nome">@aluno.Nome</p>
+                                <p class="text-xs text-slate-500 mt-0.5 truncate" title="@origem">@origem</p>
+                                <span class="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-red-700 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-md">
+                                    <i class="bi bi-calendar-x"></i>
+                                    @aluno.DataCancelamento.ToString("dd/MM/yyyy") &middot; @quando
+                                </span>
+                            </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <div class="text-center text-slate-400 py-8">
-                        <i class="bi bi-inbox text-3xl block mb-2"></i>
+                    <div class="text-center text-slate-400 py-8 px-5">
+                        <i class="bi bi-check2-circle text-3xl block mb-2 text-emerald-400"></i>
                         <span class="text-xs">Nenhum cancelamento recente.</span>
                     </div>
                 }
@@ -167,6 +221,15 @@
 </div>
 
 @section Scripts {
+    @* Fatias do gráfico de setor serializadas como JSON, no MESMO formato que o
+       endpoint GetPieGraphData devolve — assim a carga inicial e o filtro passam
+       pelo mesmo código. Nomes com aspas/acentos também não quebram mais o script. *@
+    @{
+        var fatiasPizza = Model.SectorGraphSection.ValueSectorGraph
+            .Select(f => new { curso = f.Curso, modulo = f.Modulo, quantidadeAlunos = f.QuantidadeAlunos })
+            .ToList();
+    }
+
     @* O arquivo distribuído pelo pacote é lib/chart.js/dist/chart.umd.js.
        O caminho antigo (lib/chart.js/chart.umd.min.js) não existe: dava 404 e
        "Chart is not defined", derrubando todo este script — por isso nada aparecia. *@
@@ -187,21 +250,63 @@
         }
         ];
 
-        const pieLabels = [
-        @foreach (var fatia in Model.SectorGraphSection.ValueSectorGraph)
-        {
-            @:"@(string.IsNullOrEmpty(fatia.Modulo) ? fatia.Curso : $"{fatia.Curso} - {fatia.Modulo}")",
-        }
-        ];
-        const pieData = [
-        @foreach (var fatia in Model.SectorGraphSection.ValueSectorGraph)
-        {
-            @:@(fatia.QuantidadeAlunos),
-        }
-        ];
+        // Fatias no formato [{ curso, modulo, quantidadeAlunos }] — igual ao do endpoint.
+        const fatiasPizzaIniciais = @Json.Serialize(fatiasPizza);
 
         // Rótulo de fatia: o módulo só existe quando a pizza detalha um curso.
         const rotuloFatia = d => d.modulo ? `${d.curso} - ${d.modulo}` : d.curso;
+
+        // ===== Cores das fatias =====
+        // A quantidade de módulos é variável, então depois da paleta base as cores
+        // são geradas pelo ângulo áureo — nunca faltam cores nem se repetem lado a lado.
+        const paletaBase = ['#c96442', '#f2b774', '#7c9d96', '#5b7f9e', '#a68a64', '#94a3b8',
+                            '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#84cc16'];
+
+        const coresPara = qtd => Array.from({ length: qtd }, (_, i) =>
+        i < paletaBase.length ? paletaBase[i] : `hsl(${(i * 137.508) % 360}, 52%, 55%)`);
+
+        // Escapa texto vindo do banco antes de injetar na legenda (innerHTML).
+        const escaparHtml = txt => String(txt).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        // Aplica um conjunto de fatias no gráfico + na legenda HTML.
+        // Ficam juntos porque cor, rótulo e percentual precisam bater entre os dois.
+        function aplicarDadosPizza(chart, dados) {
+        const cores = coresPara(dados.length);
+
+        chart.data.labels = dados.map(rotuloFatia);
+        chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
+        chart.data.datasets[0].backgroundColor = cores;
+        chart.update();
+
+        // Quando a pizza detalha um único curso, o nome dele vira subtítulo e a
+        // legenda mostra só o módulo — senão todas as linhas ficariam truncadas iguais.
+        const cursoUnico = dados.length > 0 && dados.every(d => d.curso === dados[0].curso && d.modulo);
+        const contexto = document.getElementById('contextoPizza');
+        contexto.textContent = cursoUnico ? dados[0].curso : '';
+        contexto.classList.toggle('hidden', !cursoUnico);
+
+        const container = document.getElementById('legendaPizza');
+        if (!dados.length) {
+        container.innerHTML = '<li class="text-xs text-slate-400 text-center py-2">Sem dados para exibir.</li>';
+        return;
+        }
+
+        const total = dados.reduce((acc, d) => acc + (Number(d.quantidadeAlunos) || 0), 0);
+
+        container.innerHTML = dados.map((d, i) => {
+        const valor = Number(d.quantidadeAlunos) || 0;
+        const percentual = total ? Math.round((valor / total) * 100) : 0;
+        const texto = escaparHtml(cursoUnico ? d.modulo : rotuloFatia(d));
+        return `
+        <li class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 shrink-0 rounded-full" style="background-color:${cores[i]}"></span>
+        <span class="flex-1 min-w-0 truncate text-xs text-slate-600" title="${escaparHtml(rotuloFatia(d))}">${texto}</span>
+        <span class="shrink-0 text-xs font-semibold text-slate-800">${valor}</span>
+        <span class="shrink-0 w-9 text-right text-[10px] text-slate-400">${percentual}%</span>
+        </li>`;
+        }).join('');
+        }
 
         // ===== Gráfico em linha: histórico de alunos =====
         new Chart(document.getElementById('lineGraphAlunos'), {
@@ -226,22 +331,39 @@
         }
         });
 
-        // ===== Gráfico de pizza: distribuição por curso/módulo =====
-        new Chart(document.getElementById('pieGraphCursos'), {
+        // ===== Gráfico de setor: distribuição por curso/módulo =====
+        const graficoPizza = new Chart(document.getElementById('pieGraphCursos'), {
         type: 'pie',
         data: {
-        labels: pieLabels,
+        labels: [],
         datasets: [{
-        data: pieData,
-        backgroundColor: ['#c96442', '#f2b774', '#7c9d96', '#5b7f9e', '#a68a64', '#94a3b8']
+        data: [],
+        backgroundColor: [],
+        borderColor: '#fff',
+        borderWidth: 2
         }]
         },
         options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+        layout: { padding: 4 },
+        plugins: {
+        // Desligada: quem desenha a legenda agora é o HTML (#legendaPizza).
+        legend: { display: false },
+        tooltip: {
+        callbacks: {
+        label: ctx => {
+        const total = ctx.dataset.data.reduce((acc, v) => acc + (Number(v) || 0), 0);
+        const percentual = total ? Math.round((ctx.parsed / total) * 100) : 0;
+        return ` ${ctx.label}: ${ctx.parsed} (${percentual}%)`;
+        }
+        }
+        }
+        }
         }
         });
+
+        aplicarDadosPizza(graficoPizza, fatiasPizzaIniciais);
 
         // ===== Filtros do gráfico em linha =====
         // Ao trocar período ou curso, reconsulta o backend e atualiza só o gráfico de linha.
@@ -271,10 +393,7 @@
 
         const dados = await resp.json();
         // dados esperado: [{ curso: "...", modulo: "..." | null, quantidadeAlunos: 5 }, ...]
-        const chart = Chart.getChart('pieGraphCursos');
-        chart.data.labels = dados.map(rotuloFatia);
-        chart.data.datasets[0].data = dados.map(d => d.quantidadeAlunos);
-        chart.update();
+        aplicarDadosPizza(Chart.getChart('pieGraphCursos'), dados);
         });
 
         // ===== Gerar relatório =====
