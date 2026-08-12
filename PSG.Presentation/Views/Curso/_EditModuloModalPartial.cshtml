@@ -1,0 +1,79 @@
+@* Views/Curso/_EditModuloModalPartial.cshtml *@
+@model PSG.Presentation.Models.Curso.ModuloEditVM
+
+<div id="modalEditarModulo"
+     class="fixed inset-0 z-50 flex items-center justify-center">
+
+    @* Backdrop escuro, clicar fora fecha a modal *@
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/50"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+
+        <form id="formEditarModulo" asp-action="EditarModulo" asp-controller="Curso" method="post">
+
+            <input type="hidden" asp-for="IdModulo" />
+            <input type="hidden" asp-for="IdCurso" />
+            <input type="hidden" asp-for="NomeCurso" />
+
+            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <h5 class="font-bold text-slate-800">Editar módulo</h5>
+                <button type="button" id="btnFecharModal"
+                        class="text-slate-400 hover:text-slate-600 text-xl leading-none">
+                    &times;
+                </button>
+            </div>
+
+            <div class="px-5 py-4 space-y-4">
+
+                <div id="erroGeralModulo" class="hidden bg-red-50 text-red-600 text-sm rounded-lg px-3 py-2"></div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5">Curso</label>
+                    @* Só contexto: trocar o módulo de curso não faz parte desta edição. *@
+                    <input type="text" value="@Model.NomeCurso" disabled
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500" />
+                </div>
+
+                <div class="grid grid-cols-[6rem_1fr] gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Número</label>
+                        <input asp-for="Numero" type="number" min="1" max="999"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="Numero" class="text-xs text-red-500"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Nome</label>
+                        <input asp-for="Nome" type="text" maxlength="100" autocomplete="off"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="Nome" class="text-xs text-red-500"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5">Professor</label>
+                    @* Desabilitado enquanto não existir a entidade Professor no Domain. *@
+                    <input type="text" value="Não informado" disabled
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400" />
+                    <span class="text-[11px] text-slate-400">
+                        A vinculação de professor ainda não existe no sistema.
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="border-t border-slate-100 px-5 py-4 flex justify-end gap-2">
+                <button type="button" id="btnCancelarModal"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50">
+                    Cancelar
+                </button>
+                <button type="submit" id="btnSalvarModulo"
+                        class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                    <i class="bi bi-check-lg"></i>
+                    Salvar
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

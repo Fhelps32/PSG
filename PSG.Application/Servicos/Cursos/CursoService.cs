@@ -62,26 +62,19 @@ namespace PSG.Application.Servicos.Cursos
 
         /// <summary>
         /// Lista os cursos para a tela de Cursos: nome, total de alunos e taxa de
-        /// cancelamento de cada um. Quando <paramref name="busca"/> vem preenchido,
-        /// filtra pelo nome do curso (contém, sem diferenciar maiúsculas).
+        /// cancelamento de cada um, ordenados por nome.
         /// </summary>
         /// <remarks>
+        /// Devolve a lista inteira porque a busca da tela é feita no cliente,
+        /// filtrando conforme o usuário digita.
         /// Contagens iguais às já usadas no dashboard, para os números baterem entre as telas:
         /// total de alunos = alunos vinculados ao curso (mesma regra de
         /// AlunoService.ObterQuantidadeAlunosPorCursoAsync).
         /// Cancelado = aluno com ao menos uma inscrição no status Cancelado.
         /// </remarks>
-        public async Task<List<CursoListagemDto>> ObterCursosParaListagemAsync(string? busca = null)
+        public async Task<List<CursoListagemDto>> ObterCursosParaListagemAsync()
         {
-            var query = _context.Cursos.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(busca))
-            {
-                var termo = busca.Trim();
-                query = query.Where(c => EF.Functions.Like(c.Nome, $"%{termo}%"));
-            }
-
-            var dados = await query
+            var dados = await _context.Cursos
                 .OrderBy(c => c.Nome)
                 .Select(c => new
                 {
@@ -129,6 +122,8 @@ namespace PSG.Application.Servicos.Cursos
                     Cancelados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Cancelado)),
                     Reprovados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Reprovado)),
                     Modulos = c.Modulos
+                        // Módulos excluídos (Status = false) somem da lista.
+                        .Where(m => m.Status)
                         .OrderBy(m => m.Numero)
                         .Select(m => new
                         {
