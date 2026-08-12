@@ -1,0 +1,224 @@
+@using PSG.Presentation.Models.Curso
+@model CursoIndexVM
+@{
+    ViewData["Title"] = "Cursos";
+    var detalhes = Model.CursoDetalhes;
+    var temDetalhes = !string.IsNullOrWhiteSpace(detalhes.Nome);
+}
+
+@functions {
+    // "Nome - SIGLA" quando a sigla existir; só o nome enquanto ela não existe no Domain.
+    static string TituloCurso(string nome, string? sigla) =>
+        string.IsNullOrWhiteSpace(sigla) ? nome : $"{nome} - {sigla}";
+
+    // Campos ainda sem origem no Domain (coordenador, professor) aparecem assim,
+    // em vez de deixar a linha vazia e parecer erro de carregamento.
+    static string OuNaoInformado(string? valor, string rotulo) =>
+        string.IsNullOrWhiteSpace(valor) ? $"{rotulo} não informado" : valor;
+}
+
+@* ===== Cabeçalho da página ===== *@
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-800">Cursos</h1>
+    <p class="text-slate-500 text-sm mt-1">Todos os cursos e seus respectivos módulos</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+
+    @* ===================== COLUNA ESQUERDA: listagem ===================== *@
+    <div class="flex flex-col gap-4">
+
+        @* Busca por nome do curso — GET, então o termo fica na URL e o link de
+           seleção de curso consegue preservá-lo. *@
+        <form asp-action="Index" method="get" class="flex gap-2">
+            <div class="relative flex-1">
+                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="busca" value="@Model.Busca"
+                       placeholder="Pesquisar curso..."
+                       class="w-full rounded-full border border-slate-300 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+            </div>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors">
+                Buscar
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Model.Busca))
+            {
+                <a asp-action="Index"
+                   class="inline-flex items-center px-4 py-2.5 rounded-full text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors">
+                    Limpar
+                </a>
+            }
+        </form>
+
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 min-h-[28rem]">
+            @if (Model.Cursos.Any())
+            {
+                <div class="flex flex-col gap-3">
+                    @foreach (var curso in Model.Cursos)
+                    {
+                        var selecionado = curso.IdCurso == detalhes.IdCurso;
+
+                        <a asp-action="Index" asp-route-cursoId="@curso.IdCurso" asp-route-busca="@Model.Busca"
+                           class="flex items-stretch rounded-xl overflow-hidden border transition-all @(selecionado ? "border-brand ring-2 ring-brand/30" : "border-amber-200 hover:border-amber-400")">
+
+                            <div class="flex-1 min-w-0 bg-amber-100 px-4 py-3">
+                                <p class="text-sm font-semibold text-slate-800 truncate" title="@TituloCurso(curso.Nome, curso.Sigla)">
+                                    @TituloCurso(curso.Nome, curso.Sigla)
+                                </p>
+                                <p class="text-xs text-slate-600 mt-2 truncate">
+                                    @OuNaoInformado(curso.NomeCoordenador, "Coordenador")
+                                    <span class="text-slate-400 mx-1">|</span>
+                                    Taxa de Cancelamento: <span class="font-semibold">@(curso.TaxaCancelamento)%</span>
+                                </p>
+                            </div>
+
+                            <div class="w-24 shrink-0 bg-rose-200 flex flex-col items-center justify-center px-2 text-center">
+                                <span class="text-lg font-bold text-slate-800 leading-tight">@curso.QuantidadeAlunos</span>
+                                <span class="text-xs text-slate-700">aluno@(curso.QuantidadeAlunos == 1 ? "" : "s")</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                var mensagemVazia = string.IsNullOrWhiteSpace(Model.Busca)
+                    ? "Nenhum curso cadastrado."
+                    : $"Nenhum curso encontrado para “{Model.Busca}”.";
+
+                <div class="text-center text-slate-400 py-24">
+                    <i class="bi bi-inbox text-4xl block mb-2"></i>
+                    <span class="text-sm">@mensagemVazia</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ===================== COLUNA DIREITA: detalhes ===================== *@
+    <div class="flex flex-col gap-6">
+
+        @if (temDetalhes)
+        {
+            @* ----- Card: resumo do curso selecionado ----- *@
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="flex items-stretch">
+
+                    <div class="flex-1 min-w-0 bg-amber-100 px-4 py-4 space-y-3">
+                        <p class="text-sm font-semibold text-slate-800 truncate" title="@TituloCurso(detalhes.Nome, detalhes.Sigla)">
+                            @TituloCurso(detalhes.Nome, detalhes.Sigla)
+                        </p>
+                        <p class="text-xs text-slate-700">
+                            Taxa de Reprovação: <span class="font-semibold">@(detalhes.TaxaReprovacao)%</span>
+                            <span class="block text-[11px] text-slate-500 mt-0.5">
+                                @detalhes.QuantidadeAlunosReprovados de @detalhes.QuantidadeAlunos alunos
+                            </span>
+                        </p>
+                        <p class="text-xs text-slate-700">
+                            Taxa de Cancelamento: <span class="font-semibold">@(detalhes.TaxaCancelamento)%</span>
+                            <span class="block text-[11px] text-slate-500 mt-0.5">
+                                @detalhes.QuantidadeAlunosCancelados de @detalhes.QuantidadeAlunos alunos
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="w-24 shrink-0 bg-rose-200 flex flex-col items-center justify-center px-2 text-center">
+                        <span class="text-xl font-bold text-slate-800 leading-tight">@detalhes.QuantidadeAlunos</span>
+                        <span class="text-xs text-slate-700">aluno@(detalhes.QuantidadeAlunos == 1 ? "" : "s")</span>
+                    </div>
+                </div>
+            </div>
+
+            @* ----- Card: módulos do curso ----- *@
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">Módulos:</h2>
+                    @* Filtro dos módulos é no cliente: a lista do curso já está toda
+                       renderizada, então não vale um round-trip para filtrar. *@
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="buscaModulo" placeholder="Pesquisar"
+                               autocomplete="off"
+                               class="w-40 rounded-full border border-slate-300 pl-8 pr-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                    </div>
+                </div>
+
+                @if (detalhes.Modulos.Any())
+                {
+                    <div id="listaModulos" class="flex flex-col gap-2 max-h-[26rem] overflow-y-auto pr-1">
+                        @foreach (var modulo in detalhes.Modulos)
+                        {
+                            // Texto usado pelo filtro client-side (número + nome + professor).
+                            var chaveBusca = $"{modulo.Numero:00} {modulo.Nome} {modulo.NomeProfessor}".ToLowerInvariant();
+
+                            <div class="modulo-item flex items-stretch rounded-xl overflow-hidden border border-amber-200"
+                                 data-nome="@chaveBusca">
+
+                                <div class="flex-1 min-w-0 bg-amber-100 px-3 py-2">
+                                    <p class="text-xs font-semibold text-slate-800 truncate" title="@modulo.Nome">
+                                        @modulo.Numero.ToString("00") - @modulo.Nome
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 truncate">
+                                        @OuNaoInformado(modulo.NomeProfessor, "Professor")
+                                    </p>
+                                </div>
+
+                                <div class="w-16 shrink-0 bg-amber-200 flex flex-col items-center justify-center px-1 text-center">
+                                    <span class="text-sm font-bold text-slate-800 leading-tight">@modulo.QuantidadeAlunos</span>
+                                    <span class="text-[10px] text-slate-700">aluno@(modulo.QuantidadeAlunos == 1 ? "" : "s")</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <p id="semResultadoModulo" class="hidden text-center text-xs text-slate-400 py-6">
+                        Nenhum módulo encontrado.
+                    </p>
+                }
+                else
+                {
+                    <div class="text-center text-slate-400 py-10">
+                        <i class="bi bi-collection text-3xl block mb-2"></i>
+                        <span class="text-xs">Este curso ainda não tem módulos.</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 text-center text-slate-400">
+                <i class="bi bi-book text-4xl block mb-2"></i>
+                <span class="text-sm">Selecione um curso para ver os detalhes.</span>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ===== Filtro dos módulos (client-side) =====
+        // Esconde as linhas que não batem com o texto digitado e mostra o aviso de
+        // "nenhum módulo" quando sobra zero — sem recarregar a página.
+        (function () {
+        const campo = document.getElementById('buscaModulo');
+        const lista = document.getElementById('listaModulos');
+        if (!campo || !lista) return;
+
+        const itens = Array.from(lista.querySelectorAll('.modulo-item'));
+        const aviso = document.getElementById('semResultadoModulo');
+
+        campo.addEventListener('input', () => {
+        const termo = campo.value.trim().toLowerCase();
+        let visiveis = 0;
+
+        itens.forEach(item => {
+        // toLowerCase também aqui: não depende do data-nome ter vindo normalizado do servidor.
+        const bate = !termo || item.dataset.nome.toLowerCase().includes(termo);
+        item.classList.toggle('hidden', !bate);
+        if (bate) visiveis++;
+        });
+
+        aviso.classList.toggle('hidden', visiveis > 0);
+        });
+        })();
+    </script>
+}
