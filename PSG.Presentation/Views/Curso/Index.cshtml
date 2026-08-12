@@ -23,72 +23,64 @@
     <p class="text-slate-500 text-sm mt-1">Todos os cursos e seus respectivos módulos</p>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+@Html.AntiForgeryToken()
+
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
 
     @* ===================== COLUNA ESQUERDA: listagem ===================== *@
     <div class="flex flex-col gap-4">
 
-        @* Busca por nome do curso — GET, então o termo fica na URL e o link de
-           seleção de curso consegue preservá-lo. *@
-        <form asp-action="Index" method="get" class="flex gap-2">
-            <div class="relative flex-1">
-                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" name="busca" value="@Model.Busca"
-                       placeholder="Pesquisar curso..."
-                       class="w-full rounded-full border border-slate-300 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
-            </div>
-            <button type="submit"
-                    class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors">
-                Buscar
-            </button>
-            @if (!string.IsNullOrWhiteSpace(Model.Busca))
-            {
-                <a asp-action="Index"
-                   class="inline-flex items-center px-4 py-2.5 rounded-full text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors">
-                    Limpar
-                </a>
-            }
-        </form>
+        @* Busca instantânea (client-side): a lista de cursos já vem inteira do
+           servidor, então filtrar aqui evita um round-trip a cada tecla. *@
+        <div class="relative">
+            <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="buscaCurso" placeholder="Pesquisar curso..." autocomplete="off"
+                   class="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+        </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 min-h-[28rem]">
             @if (Model.Cursos.Any())
             {
-                <div class="flex flex-col gap-3">
+                <div id="listaCursos" class="flex flex-col gap-2">
                     @foreach (var curso in Model.Cursos)
                     {
                         var selecionado = curso.IdCurso == detalhes.IdCurso;
+                        var titulo = TituloCurso(curso.Nome, curso.Sigla);
 
-                        <a asp-action="Index" asp-route-cursoId="@curso.IdCurso" asp-route-busca="@Model.Busca"
-                           class="flex items-stretch rounded-xl overflow-hidden border transition-all @(selecionado ? "border-brand ring-2 ring-brand/30" : "border-amber-200 hover:border-amber-400")">
+                        <a asp-action="Index" asp-route-cursoId="@curso.IdCurso"
+                           class="curso-item flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors @(selecionado ? "border-brand bg-brand-light" : "border-slate-200 hover:border-brand hover:bg-slate-50")"
+                           data-nome="@curso.Nome">
 
-                            <div class="flex-1 min-w-0 bg-amber-100 px-4 py-3">
-                                <p class="text-sm font-semibold text-slate-800 truncate" title="@TituloCurso(curso.Nome, curso.Sigla)">
-                                    @TituloCurso(curso.Nome, curso.Sigla)
-                                </p>
-                                <p class="text-xs text-slate-600 mt-2 truncate">
+                            <span class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center @(selecionado ? "bg-brand text-white" : "bg-brand-light text-brand")">
+                                <i class="bi bi-mortarboard text-lg"></i>
+                            </span>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-800 truncate" title="@titulo">@titulo</p>
+                                <p class="text-xs text-slate-500 mt-0.5 truncate">
                                     @OuNaoInformado(curso.NomeCoordenador, "Coordenador")
-                                    <span class="text-slate-400 mx-1">|</span>
-                                    Taxa de Cancelamento: <span class="font-semibold">@(curso.TaxaCancelamento)%</span>
+                                    <span class="text-slate-300 mx-1.5">|</span>
+                                    Cancelamento: <span class="font-semibold text-slate-600">@(curso.TaxaCancelamento)%</span>
                                 </p>
                             </div>
 
-                            <div class="w-24 shrink-0 bg-rose-200 flex flex-col items-center justify-center px-2 text-center">
-                                <span class="text-lg font-bold text-slate-800 leading-tight">@curso.QuantidadeAlunos</span>
-                                <span class="text-xs text-slate-700">aluno@(curso.QuantidadeAlunos == 1 ? "" : "s")</span>
+                            <div class="shrink-0 text-right">
+                                <span class="block text-base font-bold text-slate-800 leading-tight">@curso.QuantidadeAlunos</span>
+                                <span class="block text-[11px] text-slate-500">aluno@(curso.QuantidadeAlunos == 1 ? "" : "s")</span>
                             </div>
                         </a>
                     }
                 </div>
+
+                <p id="semResultadoCurso" class="hidden text-center text-sm text-slate-400 py-16">
+                    Nenhum curso encontrado.
+                </p>
             }
             else
             {
-                var mensagemVazia = string.IsNullOrWhiteSpace(Model.Busca)
-                    ? "Nenhum curso cadastrado."
-                    : $"Nenhum curso encontrado para “{Model.Busca}”.";
-
                 <div class="text-center text-slate-400 py-24">
                     <i class="bi bi-inbox text-4xl block mb-2"></i>
-                    <span class="text-sm">@mensagemVazia</span>
+                    <span class="text-sm">Nenhum curso cadastrado.</span>
                 </div>
             }
         </div>
@@ -101,70 +93,95 @@
         {
             @* ----- Card: resumo do curso selecionado ----- *@
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="flex items-stretch">
 
-                    <div class="flex-1 min-w-0 bg-amber-100 px-4 py-4 space-y-3">
-                        <p class="text-sm font-semibold text-slate-800 truncate" title="@TituloCurso(detalhes.Nome, detalhes.Sigla)">
-                            @TituloCurso(detalhes.Nome, detalhes.Sigla)
-                        </p>
-                        <p class="text-xs text-slate-700">
-                            Taxa de Reprovação: <span class="font-semibold">@(detalhes.TaxaReprovacao)%</span>
-                            <span class="block text-[11px] text-slate-500 mt-0.5">
-                                @detalhes.QuantidadeAlunosReprovados de @detalhes.QuantidadeAlunos alunos
-                            </span>
-                        </p>
-                        <p class="text-xs text-slate-700">
-                            Taxa de Cancelamento: <span class="font-semibold">@(detalhes.TaxaCancelamento)%</span>
-                            <span class="block text-[11px] text-slate-500 mt-0.5">
-                                @detalhes.QuantidadeAlunosCancelados de @detalhes.QuantidadeAlunos alunos
-                            </span>
-                        </p>
+                <div class="px-5 py-4 border-b border-slate-100">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Curso selecionado</p>
+                    <h2 class="text-base font-bold text-slate-800 mt-1 truncate" title="@TituloCurso(detalhes.Nome, detalhes.Sigla)">
+                        @TituloCurso(detalhes.Nome, detalhes.Sigla)
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-3 divide-x divide-slate-100">
+                    <div class="px-4 py-4">
+                        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Alunos</p>
+                        <p class="text-2xl font-bold text-slate-800 mt-1">@detalhes.QuantidadeAlunos</p>
                     </div>
-
-                    <div class="w-24 shrink-0 bg-rose-200 flex flex-col items-center justify-center px-2 text-center">
-                        <span class="text-xl font-bold text-slate-800 leading-tight">@detalhes.QuantidadeAlunos</span>
-                        <span class="text-xs text-slate-700">aluno@(detalhes.QuantidadeAlunos == 1 ? "" : "s")</span>
+                    <div class="px-4 py-4">
+                        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Reprovação</p>
+                        <p class="text-2xl font-bold text-amber-600 mt-1">@(detalhes.TaxaReprovacao)%</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">@detalhes.QuantidadeAlunosReprovados alunos</p>
+                    </div>
+                    <div class="px-4 py-4">
+                        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Cancelamento</p>
+                        <p class="text-2xl font-bold text-red-600 mt-1">@(detalhes.TaxaCancelamento)%</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">@detalhes.QuantidadeAlunosCancelados alunos</p>
                     </div>
                 </div>
             </div>
 
             @* ----- Card: módulos do curso ----- *@
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h2 class="text-lg font-bold text-slate-800">Módulos:</h2>
-                    @* Filtro dos módulos é no cliente: a lista do curso já está toda
-                       renderizada, então não vale um round-trip para filtrar. *@
+
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-bold text-slate-800">Módulos</h2>
+                        <span class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full bg-brand-light text-brand text-xs font-bold">
+                            @detalhes.Modulos.Count
+                        </span>
+                    </div>
+
+                    @* Mesma busca instantânea da listagem de cursos. *@
                     <div class="relative">
                         <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" id="buscaModulo" placeholder="Pesquisar"
-                               autocomplete="off"
-                               class="w-40 rounded-full border border-slate-300 pl-8 pr-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <input type="text" id="buscaModulo" placeholder="Pesquisar" autocomplete="off"
+                               class="w-40 rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
                     </div>
                 </div>
 
                 @if (detalhes.Modulos.Any())
                 {
-                    <div id="listaModulos" class="flex flex-col gap-2 max-h-[26rem] overflow-y-auto pr-1">
+                    <div id="listaModulos" class="flex flex-col gap-2 max-h-[30rem] overflow-y-auto pr-1">
                         @foreach (var modulo in detalhes.Modulos)
                         {
                             // Texto usado pelo filtro client-side (número + nome + professor).
-                            var chaveBusca = $"{modulo.Numero:00} {modulo.Nome} {modulo.NomeProfessor}".ToLowerInvariant();
+                            var chaveBusca = $"{modulo.Numero:00} {modulo.Nome} {modulo.NomeProfessor}";
 
-                            <div class="modulo-item flex items-stretch rounded-xl overflow-hidden border border-amber-200"
+                            <div class="modulo-item rounded-xl border border-slate-200 px-4 py-3 hover:border-brand transition-colors"
                                  data-nome="@chaveBusca">
 
-                                <div class="flex-1 min-w-0 bg-amber-100 px-3 py-2">
-                                    <p class="text-xs font-semibold text-slate-800 truncate" title="@modulo.Nome">
-                                        @modulo.Numero.ToString("00") - @modulo.Nome
+                                <div class="flex items-start gap-3">
+                                    <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-light text-brand text-xs font-bold flex items-center justify-center">
+                                        @modulo.Numero.ToString("00")
+                                    </span>
+
+                                    <p class="flex-1 min-w-0 text-sm font-semibold text-slate-800 truncate pt-1.5" title="@modulo.Nome">
+                                        @modulo.Nome
                                     </p>
-                                    <p class="text-[11px] text-slate-600 truncate">
-                                        @OuNaoInformado(modulo.NomeProfessor, "Professor")
-                                    </p>
+
+                                    <div class="shrink-0 flex items-center">
+                                        <button type="button" title="Editar módulo"
+                                                class="btn-editar-modulo p-2 rounded-lg text-slate-400 hover:bg-brand-light hover:text-brand transition-colors"
+                                                data-id="@modulo.IdModulo">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" title="Excluir módulo"
+                                                class="btn-excluir-modulo p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                data-id="@modulo.IdModulo" data-nome="@modulo.Nome">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div class="w-16 shrink-0 bg-amber-200 flex flex-col items-center justify-center px-1 text-center">
-                                    <span class="text-sm font-bold text-slate-800 leading-tight">@modulo.QuantidadeAlunos</span>
-                                    <span class="text-[10px] text-slate-700">aluno@(modulo.QuantidadeAlunos == 1 ? "" : "s")</span>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pl-12 text-xs">
+                                    <span class="inline-flex items-center gap-1.5 text-slate-500 min-w-0">
+                                        <i class="bi bi-person"></i>
+                                        <span class="truncate">@OuNaoInformado(modulo.NomeProfessor, "Professor")</span>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 text-slate-500 whitespace-nowrap">
+                                        <i class="bi bi-people"></i>
+                                        <span class="font-semibold text-slate-700">@modulo.QuantidadeAlunos</span>
+                                        aluno@(modulo.QuantidadeAlunos == 1 ? "" : "s")
+                                    </span>
                                 </div>
                             </div>
                         }
@@ -193,20 +210,67 @@
     </div>
 </div>
 
+@* Modal de edição é carregada por fetch e injetada aqui (mesmo esquema da tela de Inscrições) *@
+<div id="modalContainer"></div>
+
+@* ===== Confirmação de exclusão =====
+   Fica no HTML e só é exibida/escondida — não precisa de ida ao servidor. *@
+<div id="modalExcluirModulo" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" data-fechar-exclusao></div>
+
+    <div class="relative bg-white rounded-2xl shadow-lg w-full max-w-md mx-4">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <h5 class="font-bold text-slate-800">Excluir módulo</h5>
+            <button type="button" data-fechar-exclusao
+                    class="text-slate-400 hover:text-slate-600 text-xl leading-none">
+                &times;
+            </button>
+        </div>
+
+        <div class="px-5 py-5 flex items-start gap-3">
+            <span class="w-10 h-10 shrink-0 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                <i class="bi bi-exclamation-triangle text-lg"></i>
+            </span>
+            <div class="min-w-0">
+                <p class="text-sm text-slate-700">
+                    Excluir o módulo <span id="nomeModuloExclusao" class="font-semibold text-slate-900"></span>?
+                </p>
+                <p class="text-xs text-slate-500 mt-1">
+                    Ele deixa de aparecer nas listagens e nos cadastros de inscrição.
+                    As inscrições já registradas nele são preservadas.
+                </p>
+                <p id="erroExclusaoModulo" class="hidden bg-red-50 text-red-600 text-xs rounded-lg px-3 py-2 mt-3"></p>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-100 px-5 py-4 flex justify-end gap-2">
+            <button type="button" data-fechar-exclusao
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50">
+                Cancelar
+            </button>
+            <button type="button" id="btnConfirmarExclusao"
+                    class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                <i class="bi bi-trash"></i>
+                Excluir
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        // ===== Filtro dos módulos (client-side) =====
-        // Esconde as linhas que não batem com o texto digitado e mostra o aviso de
-        // "nenhum módulo" quando sobra zero — sem recarregar a página.
-        (function () {
-        const campo = document.getElementById('buscaModulo');
-        const lista = document.getElementById('listaModulos');
-        if (!campo || !lista) return;
+        // ===== Filtro instantâneo reaproveitado pelas duas buscas =====
+        // Esconde os itens que não batem com o texto digitado e mostra o aviso de
+        // "nenhum resultado" quando sobra zero — sem recarregar a página.
+        function ligarFiltro(idCampo, idLista, seletorItem, idAviso, aoFiltrar) {
+        const campo = document.getElementById(idCampo);
+        const lista = document.getElementById(idLista);
+        if (!campo || !lista) return null;
 
-        const itens = Array.from(lista.querySelectorAll('.modulo-item'));
-        const aviso = document.getElementById('semResultadoModulo');
+        const itens = Array.from(lista.querySelectorAll(seletorItem));
+        const aviso = document.getElementById(idAviso);
 
-        campo.addEventListener('input', () => {
+        function filtrar() {
         const termo = campo.value.trim().toLowerCase();
         let visiveis = 0;
 
@@ -217,8 +281,146 @@
         if (bate) visiveis++;
         });
 
-        aviso.classList.toggle('hidden', visiveis > 0);
+        if (aviso) aviso.classList.toggle('hidden', visiveis > 0);
+        if (aoFiltrar) aoFiltrar(termo);
+        }
+
+        campo.addEventListener('input', filtrar);
+        return { campo, filtrar };
+        }
+
+        // Busca de cursos: o termo é guardado porque selecionar um curso recarrega a
+        // página (o painel da direita vem do servidor) e o filtro se perderia.
+        const CHAVE_BUSCA_CURSO = 'psg:buscaCurso';
+        const filtroCursos = ligarFiltro('buscaCurso', 'listaCursos', '.curso-item', 'semResultadoCurso',
+        termo => sessionStorage.setItem(CHAVE_BUSCA_CURSO, termo));
+
+        if (filtroCursos) {
+        const salvo = sessionStorage.getItem(CHAVE_BUSCA_CURSO);
+        if (salvo) {
+        filtroCursos.campo.value = salvo;
+        filtroCursos.filtrar();
+        }
+        }
+
+        // Busca de módulos: começa limpa a cada curso, já que a lista muda.
+        ligarFiltro('buscaModulo', 'listaModulos', '.modulo-item', 'semResultadoModulo');
+
+        // ===== Modal de edição do módulo =====
+        const modalContainer = document.getElementById('modalContainer');
+        const tokenAntiForgery = () =>
+        document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.btn-editar-modulo').forEach(botao => {
+        botao.addEventListener('click', async () => {
+        const resp = await fetch(`@Url.Action("EditarModuloModal", "Curso")?idModulo=${botao.dataset.id}`);
+        if (!resp.ok) {
+        alert('Não foi possível carregar o módulo.');
+        return;
+        }
+        modalContainer.innerHTML = await resp.text();
+        document.body.classList.add('overflow-hidden'); // trava o scroll atrás da modal
+        vincularEventosModal();
         });
-        })();
+        });
+
+        function fecharModal() {
+        modalContainer.innerHTML = '';
+        document.body.classList.remove('overflow-hidden');
+        }
+
+        function vincularEventosModal() {
+        const form = document.getElementById('formEditarModulo');
+
+        document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
+        document.getElementById('btnCancelarModal').addEventListener('click', fecharModal);
+        document.getElementById('modalBackdrop').addEventListener('click', fecharModal);
+
+        // Fecha com ESC
+        document.addEventListener('keydown', function escHandler(e) {
+        if (e.key === 'Escape') {
+        fecharModal();
+        document.removeEventListener('keydown', escHandler);
+        }
+        });
+
+        form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const erroGeral = document.getElementById('erroGeralModulo');
+        erroGeral.classList.add('hidden');
+
+        const btnSalvar = document.getElementById('btnSalvarModulo');
+        btnSalvar.disabled = true;
+
+        const resp = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+
+        if (resp.ok) {
+        location.reload();
+        return;
+        }
+
+        if (resp.status === 400) {
+        // 400 = erro de validação: o servidor devolve a modal com as mensagens.
+        modalContainer.innerHTML = await resp.text();
+        vincularEventosModal();
+        } else {
+        erroGeral.textContent = 'Erro inesperado ao salvar. Tente novamente.';
+        erroGeral.classList.remove('hidden');
+        btnSalvar.disabled = false;
+        }
+        });
+        }
+
+        // ===== Exclusão do módulo =====
+        const modalExcluir = document.getElementById('modalExcluirModulo');
+        const erroExclusao = document.getElementById('erroExclusaoModulo');
+        const btnConfirmarExclusao = document.getElementById('btnConfirmarExclusao');
+        let idModuloParaExcluir = null;
+
+        function fecharExclusao() {
+        modalExcluir.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        idModuloParaExcluir = null;
+        }
+
+        document.querySelectorAll('.btn-excluir-modulo').forEach(botao => {
+        botao.addEventListener('click', () => {
+        idModuloParaExcluir = botao.dataset.id;
+        document.getElementById('nomeModuloExclusao').textContent = botao.dataset.nome;
+        erroExclusao.classList.add('hidden');
+        btnConfirmarExclusao.disabled = false;
+        modalExcluir.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        });
+        });
+
+        document.querySelectorAll('[data-fechar-exclusao]').forEach(el =>
+        el.addEventListener('click', fecharExclusao));
+
+        document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modalExcluir.classList.contains('hidden')) fecharExclusao();
+        });
+
+        btnConfirmarExclusao.addEventListener('click', async () => {
+        if (!idModuloParaExcluir) return;
+
+        btnConfirmarExclusao.disabled = true;
+
+        const dados = new FormData();
+        dados.append('idModulo', idModuloParaExcluir);
+        dados.append('__RequestVerificationToken', tokenAntiForgery());
+
+        const resp = await fetch('@Url.Action("ExcluirModulo", "Curso")', { method: 'POST', body: dados });
+
+        if (resp.ok) {
+        location.reload();
+        return;
+        }
+
+        erroExclusao.textContent = 'Não foi possível excluir o módulo. Tente novamente.';
+        erroExclusao.classList.remove('hidden');
+        btnConfirmarExclusao.disabled = false;
+        });
     </script>
 }

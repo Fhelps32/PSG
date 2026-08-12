@@ -4,10 +4,6 @@ namespace PSG.Presentation.Models.Curso
     {
         public List<CursoItem> Cursos { get; set; } = new List<CursoItem>();
         public CursoDetalhes CursoDetalhes { get; set; } = new CursoDetalhes();
-
-        // Termo digitado na busca de cursos. Guardado aqui para o campo continuar
-        // preenchido depois do submit e para os links de seleção não perderem o filtro.
-        public string? Busca { get; set; }
     }
 
     public class CursoItem
@@ -41,6 +37,8 @@ namespace PSG.Presentation.Models.Curso
 
     public class ModuloCursoItem
     {
+        // Necessário para os botões de editar/excluir da linha do módulo.
+        public int IdModulo { get; set; }
         public string Nome { get; set; } = string.Empty;
         public int Numero { get; set; }
         // Nulo enquanto não existir entidade Professor no Domain.

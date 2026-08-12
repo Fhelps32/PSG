@@ -30,4 +30,22 @@ namespace PSG.Application.Servicos.Modulos
         string Nome,
         int Numero
     );
+
+    /// <summary>Campos editáveis de um módulo (usado pela modal de edição).</summary>
+    public sealed record ModuloDtoAtualizar(
+        string Nome,
+        int Numero
+    );
+
+    /// <summary>
+    /// Dados que a modal de edição precisa exibir: os campos do módulo mais o
+    /// nome do curso, que aparece como contexto (não editável).
+    /// </summary>
+    public sealed record ModuloEdicaoDto(
+        int IdModulo,
+        int IdCurso,
+        string NomeCurso,
+        string Nome,
+        int Numero
+    );
 }

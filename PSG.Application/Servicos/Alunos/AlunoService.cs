@@ -176,7 +176,8 @@ namespace PSG.Application.Servicos.Alunos
         public async Task<List<AlunoQuantidadeModuloDto>> ObterQuantidadeAlunosPorModuloAsync(int idCurso)
         {
             var dados = await _context.Modulos
-                .Where(m => m.IdCurso == idCurso)
+                // Módulo excluído (Status = false) não vira fatia do gráfico.
+                .Where(m => m.IdCurso == idCurso && m.Status)
                 .OrderBy(m => m.Numero)
                 .Select(m => new
                 {
