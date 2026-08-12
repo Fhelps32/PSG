@@ -59,5 +59,119 @@ namespace PSG.Application.Servicos.Cursos
             var taxa = (int)Math.Round(100d * maior.Importancia / maior.Total);
             return new CursoTaxaDto(maior.Nome, taxa, maior.Importancia, maior.Total);
         }
+
+        /// <summary>
+        /// Lista os cursos para a tela de Cursos: nome, total de alunos e taxa de
+        /// cancelamento de cada um. Quando <paramref name="busca"/> vem preenchido,
+        /// filtra pelo nome do curso (contém, sem diferenciar maiúsculas).
+        /// </summary>
+        /// <remarks>
+        /// Contagens iguais às já usadas no dashboard, para os números baterem entre as telas:
+        /// total de alunos = alunos vinculados ao curso (mesma regra de
+        /// AlunoService.ObterQuantidadeAlunosPorCursoAsync).
+        /// Cancelado = aluno com ao menos uma inscrição no status Cancelado.
+        /// </remarks>
+        public async Task<List<CursoListagemDto>> ObterCursosParaListagemAsync(string? busca = null)
+        {
+            var query = _context.Cursos.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(busca))
+            {
+                var termo = busca.Trim();
+                query = query.Where(c => EF.Functions.Like(c.Nome, $"%{termo}%"));
+            }
+
+            var dados = await query
+                .OrderBy(c => c.Nome)
+                .Select(c => new
+                {
+                    c.IdCurso,
+                    c.Nome,
+                    Total = c.Alunos.Count(),
+                    Cancelados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Cancelado))
+                })
+                .ToListAsync();
+
+            return dados
+                .Select(d => new CursoListagemDto(
+                    d.IdCurso,
+                    d.Nome,
+                    // Sigla e coordenador ainda não existem no Domain.
+                    Sigla: null,
+                    NomeCoordenador: null,
+                    d.Total,
+                    CalcularTaxa(d.Cancelados, d.Total)))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Detalhes do curso selecionado na tela de Cursos: total de alunos, quantos
+        /// cancelaram/reprovaram, as taxas correspondentes e a lista de módulos com a
+        /// quantidade de alunos de cada um (ordenada pelo número do módulo).
+        /// Retorna null quando o curso não existe.
+        /// </summary>
+        /// <remarks>
+        /// A contagem por módulo considera só as inscrições ativas (AlunoModulo.Status),
+        /// mesma regra de AlunoService.ObterQuantidadeAlunosPorModuloAsync.
+        /// Atenção: a taxa aqui é sobre ALUNOS do curso, enquanto
+        /// ObterCursoComMaiorTaxaAsync (usada no dashboard) é sobre INSCRIÇÕES —
+        /// os percentuais das duas telas podem divergir.
+        /// </remarks>
+        public async Task<CursoDetalhesDto?> ObterDetalhesDoCursoAsync(int idCurso)
+        {
+            var dados = await _context.Cursos
+                .Where(c => c.IdCurso == idCurso)
+                .Select(c => new
+                {
+                    c.IdCurso,
+                    c.Nome,
+                    Total = c.Alunos.Count(),
+                    Cancelados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Cancelado)),
+                    Reprovados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Reprovado)),
+                    Modulos = c.Modulos
+                        .OrderBy(m => m.Numero)
+                        .Select(m => new
+                        {
+                            m.IdModulo,
+                            m.Nome,
+                            m.Numero,
+                            Total = m.Alunos.Count(am => am.Status)
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (dados is null)
+            {
+                return null;
+            }
+
+            return new CursoDetalhesDto(
+                dados.IdCurso,
+                dados.Nome,
+                // Sigla ainda não existe no Domain.
+                Sigla: null,
+                dados.Total,
+                dados.Cancelados,
+                dados.Reprovados,
+                CalcularTaxa(dados.Cancelados, dados.Total),
+                CalcularTaxa(dados.Reprovados, dados.Total),
+                dados.Modulos
+                    .Select(m => new ModuloCursoDto(
+                        m.IdModulo,
+                        m.Nome,
+                        m.Numero,
+                        // Professor ainda não existe no Domain.
+                        NomeProfessor: null,
+                        m.Total))
+                    .ToList());
+        }
+
+        /// <summary>
+        /// Percentual arredondado de <paramref name="parte"/> sobre <paramref name="total"/>.
+        /// Curso sem aluno nenhum devolve 0 em vez de estourar a divisão.
+        /// </summary>
+        private static int CalcularTaxa(int parte, int total) =>
+            total == 0 ? 0 : (int)Math.Round(100d * parte / total);
     }
 }
