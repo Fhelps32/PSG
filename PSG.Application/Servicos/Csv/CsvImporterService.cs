@@ -14,6 +14,13 @@ namespace PSG.Application.Servicos.Csv
 {
     public class CsvImporterService
     {
+        // Curso e Módulo exigem professor, mas o CSV não traz essa informação.
+        // Até a API de professores existir, o que a importação cria fica com este
+        // professor provisório — os mesmos valores usados pela migration
+        // AdicionaProfessor nos cursos e módulos que já existiam.
+        private const string MatriculaProfessorProvisorio = "A-DEFINIR";
+        private const string NomeProfessorProvisorio = "A definir";
+
         private readonly ICsvReaderService _csvReaderService;
         private readonly IPSGDbContext _context;
 
@@ -47,6 +54,8 @@ namespace PSG.Application.Servicos.Csv
             var alunos = await _context.Alunos.Include(a => a.Curso).ToListAsync();
             var modulos = await _context.Modulos.Include(m => m.Curso).ToListAsync();
 
+            var professorProvisorio = await ObterOuCriarProfessorProvisorioAsync();
+
             var cursosPorNome = cursos.ToDictionary(c => c.Nome.Trim().ToUpperInvariant());
             var alunosPorCursoENome = alunos.ToDictionary(a => (a.Curso, Nome: a.Nome.Trim().ToUpperInvariant()));
             var modulosPorCursoENumero = modulos.ToDictionary(m => (m.Curso, m.Numero));
@@ -71,6 +80,7 @@ namespace PSG.Application.Servicos.Csv
                     var alunoModulo = ProcessarLinha(
                         linha,
                         cursosPorNome, alunosPorCursoENome, modulosPorCursoENumero,
+                        professorProvisorio,
                         ref cursosCriados, ref alunosCriados, ref modulosCriados);
 
                     _context.AlunoModulos.Add(alunoModulo);
@@ -103,11 +113,31 @@ namespace PSG.Application.Servicos.Csv
             };
         }
 
+        /// <summary>
+        /// Professor usado nos cursos e módulos criados pela importação, já que o CSV
+        /// não informa professor e a FK é obrigatória. Reaproveita o registro se ele
+        /// já existir (criado por outra importação ou pela migration AdicionaProfessor).
+        /// </summary>
+        private async Task<Professor> ObterOuCriarProfessorProvisorioAsync()
+        {
+            var professor = await _context.Professores
+                .FirstOrDefaultAsync(p => p.Matricula == MatriculaProfessorProvisorio);
+
+            if (professor == null)
+            {
+                professor = new Professor(MatriculaProfessorProvisorio, NomeProfessorProvisorio);
+                _context.Professores.Add(professor);
+            }
+
+            return professor;
+        }
+
         private AlunoModulo ProcessarLinha(
             LinhaCsvDto linha,
             Dictionary<string, Curso> cursosPorNome,
             Dictionary<(Curso Curso, string Nome), Aluno> alunosPorCursoENome,
             Dictionary<(Curso Curso, int Numero), Modulo> modulosPorCursoENumero,
+            Professor professorProvisorio,
             ref int cursosCriados, ref int alunosCriados, ref int modulosCriados)
         {
             if (string.IsNullOrWhiteSpace(linha.Curso))
@@ -137,11 +167,11 @@ namespace PSG.Application.Servicos.Csv
             if (dataMatricula == null && !string.IsNullOrWhiteSpace(linha.DataMatricula))
                 obsDataMatricula = $"Data matríc. (original, não reconhecida como data): {linha.DataMatricula.Trim()}";
 
-            var curso = ObterOuCriarCurso(linha.Curso, cursosPorNome, ref cursosCriados);
+            var curso = ObterOuCriarCurso(linha.Curso, cursosPorNome, professorProvisorio, ref cursosCriados);
 
             var aluno = ObterOuCriarAluno(linha.Aluno, linha.Celular, curso, alunosPorCursoENome, ref alunosCriados);
 
-            var modulo = ObterOuCriarModulo(linha.NomeModulo, numeroModulo, curso, modulosPorCursoENumero, ref modulosCriados);
+            var modulo = ObterOuCriarModulo(linha.NomeModulo, numeroModulo, curso, professorProvisorio, modulosPorCursoENumero, ref modulosCriados);
 
             var (nota, status, obsNota) = ResolverNotaEStatus(linha);
 
@@ -167,6 +197,7 @@ namespace PSG.Application.Servicos.Csv
         private Curso ObterOuCriarCurso(
             string nomeCurso,
             Dictionary<string, Curso> cursosPorNome,
+            Professor professorProvisorio,
             ref int cursosCriados)
         {
             var chave = nomeCurso.Trim().ToUpperInvariant();
@@ -174,7 +205,11 @@ namespace PSG.Application.Servicos.Csv
             if (cursosPorNome.TryGetValue(chave, out var curso))
                 return curso;
 
-            curso = new Curso(nomeCurso.Trim());
+            curso = new Curso(nomeCurso.Trim())
+            {
+                // Coordenador é obrigatório e o CSV não informa: entra o provisório.
+                Coordenador = professorProvisorio
+            };
             _context.Cursos.Add(curso);
             cursosPorNome[chave] = curso;
             cursosCriados++;
@@ -211,6 +246,7 @@ namespace PSG.Application.Servicos.Csv
             string nomeModulo,
             int numeroModulo,
             Curso curso,
+            Professor professorProvisorio,
             Dictionary<(Curso Curso, int Numero), Modulo> modulosPorCursoENumero,
             ref int modulosCriados)
         {
@@ -219,7 +255,11 @@ namespace PSG.Application.Servicos.Csv
             if (modulosPorCursoENumero.TryGetValue(chave, out var modulo))
                 return modulo;
 
-            modulo = new Modulo(curso, nomeModulo.Trim(), numeroModulo);
+            modulo = new Modulo(curso, nomeModulo.Trim(), numeroModulo)
+            {
+                // Professor é obrigatório e o CSV não informa: entra o provisório.
+                Professor = professorProvisorio
+            };
             _context.Modulos.Add(modulo);
             modulosPorCursoENumero[chave] = modulo;
             modulosCriados++;
