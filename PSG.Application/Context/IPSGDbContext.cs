@@ -13,6 +13,7 @@ namespace PSG.Application.Context
         DbSet<Curso> Cursos { get; }
         DbSet<Aluno> Alunos { get; }
         DbSet<Modulo> Modulos { get; }
+        DbSet<Professor> Professores { get; }
         DbSet<AlunoModulo> AlunoModulos { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
