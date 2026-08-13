@@ -23,6 +23,10 @@ namespace PSG.Infra.Data.Mappings
                    .WithMany(c => c.Modulos)
                    .HasForeignKey(m => m.IdCurso)
                    .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(m => m.Professor)
+                   .WithMany(p => p.Modulos)
+                   .HasForeignKey(m => m.IdProfessor)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

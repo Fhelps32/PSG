@@ -17,6 +17,11 @@ namespace PSG.Infra.Data.Mappings
             builder.Property(c => c.Nome).IsRequired().HasMaxLength(100);
             builder.Property(c => c.DataCadastro).IsRequired();
             builder.Property(c => c.Status).IsRequired();
+
+            builder.HasOne(c => c.Coordenador)
+                   .WithMany(p => p.Cursos)
+                   .HasForeignKey(c => c.IdCoordenador)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

@@ -18,6 +18,7 @@ namespace PSG.Infra.Data
         public DbSet<Curso> Cursos { get; set; } = null!;
         public DbSet<Aluno> Alunos { get; set; } = null!;
         public DbSet<Modulo> Modulos { get; set; } = null!;
+        public DbSet<Professor> Professores { get; set; } = null!;
         public DbSet<AlunoModulo> AlunoModulos { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

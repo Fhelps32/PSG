@@ -10,10 +10,12 @@ namespace PSG.Domain
     public class Curso
     {
         public int IdCurso { get; set; }
+        public int IdCoordenador { get; set; }
         public string Nome { get; set; } = string.Empty;
         public DateTime DataCadastro { get; set; } = DateTime.Now;
         public bool Status { get; set; } = true; 
 
+        public Professor Coordenador { get; set; }
         public ICollection<Modulo> Modulos { get; set; } = new List<Modulo>();
         public ICollection<Aluno> Alunos { get; set; } = new List<Aluno>();
 

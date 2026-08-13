@@ -12,12 +12,14 @@ namespace PSG.Domain
     {
         public int IdModulo { get; set; }
         public int IdCurso { get; set; }
+        public int IdProfessor { get; set; }
         public string Nome { get; set; }
         public int Numero { get; set; }
         public DateTime DataCadastro { get; set; } = DateTime.Now;  
         public bool Status { get; set; } = true;
 
         public Curso Curso { get; set; }
+        public Professor Professor { get; set; }
         public ICollection<AlunoModulo> Alunos { get; set; } = new List<AlunoModulo>();
 
         private Modulo()

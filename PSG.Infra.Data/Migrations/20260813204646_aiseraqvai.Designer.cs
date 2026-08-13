@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PSG.Infra.Data;
 
@@ -11,9 +12,11 @@ using PSG.Infra.Data;
 namespace PSG.Infra.Data.Migrations
 {
     [DbContext(typeof(PSGDbContext))]
-    partial class PSGDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813204646_aiseraqvai")]
+    partial class aiseraqvai
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,11 +123,11 @@ namespace PSG.Infra.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdCurso"));
 
+                    b.Property<int>("CoordenadorIdProfessor")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("DataCadastro")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("IdCoordenador")
-                        .HasColumnType("int");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -134,9 +137,12 @@ namespace PSG.Infra.Data.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
+                    b.Property<int>("idCoordenador")
+                        .HasColumnType("int");
+
                     b.HasKey("IdCurso");
 
-                    b.HasIndex("IdCoordenador");
+                    b.HasIndex("CoordenadorIdProfessor");
 
                     b.ToTable("Cursos");
                 });
@@ -166,6 +172,9 @@ namespace PSG.Infra.Data.Migrations
                     b.Property<int>("Numero")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProfessorIdProfessor")
+                        .HasColumnType("int");
+
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
@@ -173,7 +182,7 @@ namespace PSG.Infra.Data.Migrations
 
                     b.HasIndex("IdCurso");
 
-                    b.HasIndex("IdProfessor");
+                    b.HasIndex("ProfessorIdProfessor");
 
                     b.ToTable("Modulos");
                 });
@@ -234,9 +243,9 @@ namespace PSG.Infra.Data.Migrations
             modelBuilder.Entity("PSG.Domain.Curso", b =>
                 {
                     b.HasOne("PSG.Domain.Professor", "Coordenador")
-                        .WithMany("Cursos")
-                        .HasForeignKey("IdCoordenador")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .WithMany()
+                        .HasForeignKey("CoordenadorIdProfessor")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Coordenador");
@@ -252,8 +261,8 @@ namespace PSG.Infra.Data.Migrations
 
                     b.HasOne("PSG.Domain.Professor", "Professor")
                         .WithMany("Modulos")
-                        .HasForeignKey("IdProfessor")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("ProfessorIdProfessor")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Curso");
@@ -280,8 +289,6 @@ namespace PSG.Infra.Data.Migrations
 
             modelBuilder.Entity("PSG.Domain.Professor", b =>
                 {
-                    b.Navigation("Cursos");
-
                     b.Navigation("Modulos");
                 });
 #pragma warning restore 612, 618
