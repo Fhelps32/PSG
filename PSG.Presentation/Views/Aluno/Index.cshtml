@@ -1,0 +1,445 @@
+@using PSG.Application.Servicos.Alunos
+@using PSG.Domain.Enum
+@using PSG.Presentation.Models.Aluno
+@model AlunoIndexVM
+@{
+    ViewData["Title"] = "Alunos";
+    var detalhes = Model.AlunoDetalhes;
+    var temDetalhes = !string.IsNullOrWhiteSpace(detalhes.Nome);
+
+    // Filtros ativos, anexados aos links de página e de seleção de aluno para que
+    // a navegação não perca o que foi filtrado.
+    var rotaFiltros = new Dictionary<string, string>();
+    if (!string.IsNullOrWhiteSpace(Model.Busca)) rotaFiltros["busca"] = Model.Busca;
+    if (Model.CursoId.HasValue) rotaFiltros["cursoId"] = Model.CursoId.Value.ToString();
+    if (Model.ModuloId.HasValue) rotaFiltros["moduloId"] = Model.ModuloId.Value.ToString();
+}
+
+@functions {
+    // Situação do aluno: texto e cores do badge.
+    static string StatusAlunoText(EnumStatusAluno status) => status switch
+    {
+        EnumStatusAluno.Cursando => "Cursando",
+        EnumStatusAluno.Finalizado => "Finalizado",
+        EnumStatusAluno.EmEspera => "Em espera",
+        _ => status.ToString()
+    };
+
+    static string StatusAlunoClass(EnumStatusAluno status) => status switch
+    {
+        EnumStatusAluno.Cursando => "bg-brand-light text-brand",
+        EnumStatusAluno.Finalizado => "bg-green-100 text-green-700",
+        EnumStatusAluno.EmEspera => "bg-amber-100 text-amber-700",
+        _ => "bg-slate-100 text-slate-500"
+    };
+
+    // Status da inscrição no módulo — mesmas cores da tela de Inscrições.
+    static string StatusText(EnumStatus status) => status switch
+    {
+        EnumStatus.Aprovado => "Aprovado",
+        EnumStatus.Reprovado => "Reprovado",
+        EnumStatus.EmAndamento => "Andamento",
+        EnumStatus.Cancelado => "Cancelado",
+        _ => status.ToString()
+    };
+
+    static string StatusClass(EnumStatus status) => status switch
+    {
+        EnumStatus.Aprovado => "bg-green-100 text-green-700",
+        EnumStatus.Reprovado => "bg-red-100 text-red-600",
+        EnumStatus.EmAndamento => "bg-blue-100 text-blue-700",
+        EnumStatus.Cancelado => "bg-slate-100 text-slate-500",
+        _ => "bg-slate-100 text-slate-500"
+    };
+
+    // Data opcional: "—" quando não existe (o mock pede "caso exista").
+    static string DataOuTraco(DateTime? data) =>
+        data.HasValue ? data.Value.ToString("dd/MM/yyyy") : "—";
+
+    // Nota só faz sentido depois de concluído (aprovado ou reprovado).
+    static bool TemNota(EnumStatus status) =>
+        status is EnumStatus.Aprovado or EnumStatus.Reprovado;
+}
+
+@* ===== Cabeçalho da página ===== *@
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-800">Alunos</h1>
+    <p class="text-slate-500 text-sm mt-1">Acompanhamento dos alunos e dos módulos de cada um</p>
+</div>
+
+@* minmax(0,1fr) e não 1fr: com 1fr a coluna da esquerda não encolhe abaixo da
+   largura mínima do formulário de filtros e empurra a coluna da direita para
+   fora da tela. *@
+<div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
+
+    @* ===================== COLUNA ESQUERDA: listagem ===================== *@
+    <div class="flex flex-col gap-4">
+
+        @* Busca e filtros vão ao servidor (GET): a lista é paginada, então filtrar
+           só o que está na tela daria resultado errado. *@
+        <form asp-action="Index" method="get" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[14rem]">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Nome ou matrícula</label>
+                <div class="relative">
+                    <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" name="busca" value="@Model.Busca" placeholder="Pesquisar..."
+                           class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                </div>
+            </div>
+
+            <div class="w-48">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Curso</label>
+                <select asp-for="CursoId" asp-items="Model.Cursos"
+                        class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="w-48">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Módulo</label>
+                <select asp-for="ModuloId" asp-items="Model.Modulos"
+                        class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+                    <i class="bi bi-funnel"></i>
+                    Filtrar
+                </button>
+                @if (!string.IsNullOrWhiteSpace(Model.Busca) || Model.CursoId.HasValue || Model.ModuloId.HasValue)
+                {
+                    <a asp-action="Index"
+                       class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors">
+                        Limpar
+                    </a>
+                }
+            </div>
+        </form>
+
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 min-h-[30rem]">
+
+            @* Total + paginação *@
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
+                    Quantidade de alunos:
+                    <span class="font-bold text-slate-800">@Model.TotalItems</span>
+                </span>
+
+                @if (Model.TotalPaginas > 1)
+                {
+                    // Janela de páginas mostradas (atual ± 1), sem estourar os limites.
+                    var inicio = Math.Max(1, Model.PaginaAtual - 1);
+                    var fim = Math.Min(Model.TotalPaginas, Model.PaginaAtual + 1);
+
+                    <nav class="flex items-center gap-1">
+                        @if (Model.TemPaginaAnterior)
+                        {
+                            <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual - 1)"
+                               class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                                <i class="bi bi-chevron-left"></i>
+                            </span>
+                        }
+
+                        @for (int p = inicio; p <= fim; p++)
+                        {
+                            if (p == Model.PaginaAtual)
+                            {
+                                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand text-white font-semibold">@p</span>
+                            }
+                            else
+                            {
+                                <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@p"
+                                   class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">@p</a>
+                            }
+                        }
+
+                        @if (Model.TemProximaPagina)
+                        {
+                            <a asp-action="Index" asp-all-route-data="rotaFiltros" asp-route-pagina="@(Model.PaginaAtual + 1)"
+                               class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-300">
+                                <i class="bi bi-chevron-right"></i>
+                            </span>
+                        }
+
+                        <span class="ml-2 text-xs text-slate-400">
+                            Página @Model.PaginaAtual de @Model.TotalPaginas
+                        </span>
+                    </nav>
+                }
+            </div>
+
+            @if (Model.Alunos.Any())
+            {
+                <div class="flex flex-col gap-2">
+                    @foreach (var aluno in Model.Alunos)
+                    {
+                        var selecionado = aluno.IdAluno == detalhes.IdAluno;
+
+                        <a asp-action="Index" asp-all-route-data="rotaFiltros"
+                           asp-route-pagina="@Model.PaginaAtual" asp-route-alunoId="@aluno.IdAluno"
+                           class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors @(selecionado ? "border-brand bg-brand-light" : "border-slate-200 hover:border-brand hover:bg-slate-50")">
+
+                            <span class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center @(selecionado ? "bg-brand text-white" : "bg-brand-light text-brand")">
+                                <i class="bi bi-person text-lg"></i>
+                            </span>
+
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-800 truncate" title="@aluno.Nome">
+                                    @aluno.Nome
+                                    <span class="text-slate-400 font-normal">/ @(string.IsNullOrWhiteSpace(aluno.Matricula) ? "sem matrícula" : aluno.Matricula)</span>
+                                </p>
+                                <p class="text-xs text-slate-500 mt-0.5 truncate">
+                                    Módulo atual: <span class="text-slate-600">@(aluno.ModuloAtual ?? "nenhum em andamento")</span>
+                                </p>
+                            </div>
+
+                            <div class="shrink-0 text-right max-w-[10rem]">
+                                <p class="text-xs text-slate-600 truncate" title="@aluno.NomeCurso">@aluno.NomeCurso</p>
+                                <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold @StatusAlunoClass(aluno.Status)">
+                                    @StatusAlunoText(aluno.Status)
+                                </span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-slate-400 py-24">
+                    <i class="bi bi-inbox text-4xl block mb-2"></i>
+                    <span class="text-sm">Nenhum aluno encontrado.</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ===================== COLUNA DIREITA: detalhes ===================== *@
+    <div class="flex flex-col gap-6">
+
+        @if (temDetalhes)
+        {
+            @* ----- Card: identificação do aluno ----- *@
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        @* Sem truncate: o nome é a informação principal do card e
+                           nomes longos ficariam cortados na largura desta coluna. *@
+                        <h2 class="text-base font-bold text-slate-800 leading-snug break-words">@detalhes.Nome</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Matrícula:
+                            <span class="text-slate-700">@(string.IsNullOrWhiteSpace(detalhes.Matricula) ? "não informada" : detalhes.Matricula)</span>
+                        </p>
+                    </div>
+
+                    <div class="shrink-0 text-right max-w-[11rem]">
+                        <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Curso</p>
+                        <p class="text-xs text-slate-700 truncate mt-0.5" title="@detalhes.NomeCurso">@detalhes.NomeCurso</p>
+                        <span class="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold @StatusAlunoClass(detalhes.Status)">
+                            @StatusAlunoText(detalhes.Status)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            @* ----- Card: módulos do aluno ----- *@
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-bold text-slate-800">Módulos</h2>
+                        <span class="inline-flex items-center justify-center h-6 px-2 rounded-full bg-brand-light text-brand text-xs font-bold">
+                            @detalhes.ModulosConcluidos/@detalhes.TotalModulosCurso
+                        </span>
+                    </div>
+
+                    @* Busca instantânea: os módulos do aluno já vêm todos renderizados. *@
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="buscaModulo" placeholder="Pesquisar" autocomplete="off"
+                               class="w-36 rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                    </div>
+                </div>
+
+                @if (detalhes.Modulos.Any())
+                {
+                    <div id="listaModulos" class="flex flex-col gap-2 max-h-[24rem] overflow-y-auto pr-1">
+                        @foreach (var modulo in detalhes.Modulos)
+                        {
+                            // Texto usado pelo filtro client-side (número + nome).
+                            var chaveBusca = $"{modulo.Numero:00} {modulo.Nome}";
+
+                            <div class="modulo-item flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3"
+                                 data-nome="@chaveBusca">
+
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-slate-800 truncate" title="@modulo.Nome">
+                                        @modulo.Numero.ToString("00") - @modulo.Nome
+                                    </p>
+                                    <p class="text-[11px] text-slate-500 mt-1">
+                                        Inscrição: <span class="text-slate-600">@DataOuTraco(modulo.DataInscricao)</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-500">
+                                        Fim: <span class="text-slate-600">@DataOuTraco(modulo.DataFim)</span>
+                                    </p>
+                                </div>
+
+                                <div class="shrink-0 text-right">
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold @StatusClass(modulo.Status)">
+                                        @StatusText(modulo.Status)
+                                    </span>
+                                    @if (TemNota(modulo.Status))
+                                    {
+                                        <p class="text-sm font-bold text-slate-800 mt-1.5">@modulo.Nota.ToString("0.0")</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <p id="semResultadoModulo" class="hidden text-center text-xs text-slate-400 py-6">
+                        Nenhum módulo encontrado.
+                    </p>
+                }
+                else
+                {
+                    <div class="text-center text-slate-400 py-10">
+                        <i class="bi bi-collection text-3xl block mb-2"></i>
+                        <span class="text-xs">Este aluno ainda não tem módulos.</span>
+                    </div>
+                }
+            </div>
+
+            @* ----- Card: módulos reprovados -----
+               Destacado em vermelho porque é o ponto que pede atenção, mesma ideia
+               da seção de cancelados no dashboard. Só aparece quando há reprovação. *@
+            @if (detalhes.ModulosReprovados.Any())
+            {
+                <div class="bg-white border border-red-200 rounded-2xl shadow-sm overflow-hidden">
+
+                    <div class="flex items-center gap-3 px-5 py-4 bg-red-50 border-b border-red-100">
+                        <span class="w-9 h-9 shrink-0 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                            <i class="bi bi-exclamation-triangle text-lg"></i>
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-sm font-bold text-red-800 leading-tight">Módulos Reprovados</h2>
+                            <p class="text-[11px] text-red-500 mt-0.5">Precisam de recuperação</p>
+                        </div>
+                        <span class="shrink-0 inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 rounded-full bg-red-600 text-white text-xs font-bold">
+                            @detalhes.ModulosReprovados.Count
+                        </span>
+                    </div>
+
+                    <div class="flex flex-col divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                        @foreach (var modulo in detalhes.ModulosReprovados)
+                        {
+                            <div class="flex items-center gap-3 px-5 py-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-slate-800 truncate" title="@modulo.Nome">
+                                        @modulo.Numero.ToString("00") - @modulo.Nome
+                                    </p>
+                                    <p class="text-[11px] text-slate-500 mt-1">
+                                        Inscrição: <span class="text-slate-600">@DataOuTraco(modulo.DataInscricao)</span>
+                                        <span class="text-slate-300 mx-1">|</span>
+                                        Fim: <span class="text-slate-600">@DataOuTraco(modulo.DataFim)</span>
+                                    </p>
+                                </div>
+
+                                <div class="shrink-0 text-center">
+                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Nota</p>
+                                    <p class="text-xl font-bold text-red-600 leading-tight">@modulo.Nota.ToString("0.0")</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 text-center text-slate-400">
+                <i class="bi bi-person-lines-fill text-4xl block mb-2"></i>
+                <span class="text-sm">Selecione um aluno para ver os detalhes.</span>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ===== Busca instantânea dos módulos do aluno =====
+        // Esconde as linhas que não batem com o texto digitado e mostra o aviso de
+        // "nenhum resultado" quando sobra zero — sem recarregar a página.
+        (function () {
+        const campo = document.getElementById('buscaModulo');
+        const lista = document.getElementById('listaModulos');
+        if (!campo || !lista) return;
+
+        const itens = Array.from(lista.querySelectorAll('.modulo-item'));
+        const aviso = document.getElementById('semResultadoModulo');
+
+        campo.addEventListener('input', () => {
+        const termo = campo.value.trim().toLowerCase();
+        let visiveis = 0;
+
+        itens.forEach(item => {
+        const bate = !termo || item.dataset.nome.toLowerCase().includes(termo);
+        item.classList.toggle('hidden', !bate);
+        if (bate) visiveis++;
+        });
+
+        if (aviso) aviso.classList.toggle('hidden', visiveis > 0);
+        });
+        })();
+
+        // ===== Cascata Curso -> Módulo no filtro =====
+        // Ao trocar o curso, recarrega as opções de módulo daquele curso, mantendo
+        // "Todos" como primeira opção (mesma ideia do filtro de Inscrições).
+        (function () {
+        // ids gerados pelo asp-for (mesmo esquema do filtro de Inscrições)
+        const filtroCurso = document.getElementById('CursoId');
+        const filtroModulo = document.getElementById('ModuloId');
+        if (!filtroCurso || !filtroModulo) return;
+
+        filtroCurso.addEventListener('change', async () => {
+        const cursoId = filtroCurso.value;
+
+        if (!cursoId) {
+        filtroModulo.innerHTML = '<option value="">Todos</option>';
+        return;
+        }
+
+        filtroModulo.innerHTML = '<option value="">Carregando...</option>';
+
+        const resp = await fetch(`@Url.Action("GetModulosPorCurso", "Aluno")?cursoId=${cursoId}`);
+        if (!resp.ok) {
+        filtroModulo.innerHTML = '<option value="">Todos</option>';
+        return;
+        }
+
+        const modulos = await resp.json();
+        filtroModulo.innerHTML = '<option value="">Todos</option>';
+        modulos.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.text;
+        filtroModulo.appendChild(opt);
+        });
+        });
+        })();
+    </script>
+}
