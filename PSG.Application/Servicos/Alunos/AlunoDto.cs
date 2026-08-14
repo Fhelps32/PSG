@@ -60,4 +60,50 @@ namespace PSG.Application.Servicos.Alunos
         string NomeModulo,
         DateTime DataCancelamento
     );
+
+    /// <summary>
+    /// Situação do aluno no curso. Não é persistida: sai da combinação das
+    /// inscrições dele (ver AlunoService.CalcularStatusAluno).
+    /// </summary>
+    public enum EnumStatusAluno
+    {
+        Cursando,
+        Finalizado,
+        EmEspera
+    }
+
+    /// <summary>Uma linha da listagem de alunos.</summary>
+    public sealed record AlunoListagemDto(
+        int IdAluno,
+        string Nome,
+        string? Matricula,
+        string NomeCurso,
+        // Módulo em andamento de maior número; null quando o aluno não está cursando nada.
+        string? ModuloAtual,
+        EnumStatusAluno Status
+    );
+
+    /// <summary>Painel de detalhes do aluno selecionado.</summary>
+    public sealed record AlunoDetalhesDto(
+        int IdAluno,
+        string Nome,
+        string? Matricula,
+        string NomeCurso,
+        EnumStatusAluno Status,
+        int ModulosConcluidos,
+        int TotalModulosCurso,
+        List<AlunoModuloDetalheDto> Modulos,
+        List<AlunoModuloDetalheDto> ModulosReprovados
+    );
+
+    /// <summary>Uma inscrição do aluno, como aparece no painel de detalhes.</summary>
+    public sealed record AlunoModuloDetalheDto(
+        int IdModulo,
+        string NomeModulo,
+        int NumeroModulo,
+        DateTime? DataInscricao,
+        DateTime? DataFim,
+        decimal Nota,
+        EnumStatus Status
+    );
 }

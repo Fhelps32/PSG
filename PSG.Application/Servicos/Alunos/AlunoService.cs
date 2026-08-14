@@ -8,6 +8,9 @@ namespace PSG.Application.Servicos.Alunos
 {
     public class AlunoService
     {
+        // Tamanho da página da listagem de alunos (tela de Alunos).
+        private const int TamanhoPaginaAlunos = 20;
+
         private readonly IPSGDbContext _context;
 
         public AlunoService(IPSGDbContext context)
@@ -235,6 +238,162 @@ namespace PSG.Application.Servicos.Alunos
             return new AlunoQuantidadeDto(quantidadeAlunos, dataInicio);
         }
 
+        /// <summary>
+        /// Lista paginada de alunos para a tela de Alunos, com o curso, o módulo que o
+        /// aluno está cursando e a situação dele. Todos os filtros são opcionais e se
+        /// somam: <paramref name="busca"/> casa com nome OU matrícula (contém),
+        /// <paramref name="idCurso"/> limita ao curso e <paramref name="idModulo"/>
+        /// deixa só quem tem inscrição naquele módulo.
+        /// </summary>
+        /// <remarks>
+        /// A busca e os filtros ficam no banco (e não no cliente) porque a listagem é
+        /// paginada: filtrar só a página exibida daria um resultado errado.
+        /// </remarks>
+        public async Task<PagedResult<AlunoListagemDto>> ObterAlunosParaListagemAsync(
+            int pagina,
+            string? busca = null,
+            int? idCurso = null,
+            int? idModulo = null)
+        {
+            var query = _context.Alunos.AsQueryable();
 
+            if (!string.IsNullOrWhiteSpace(busca))
+            {
+                var termo = busca.Trim();
+                query = query.Where(a =>
+                    EF.Functions.Like(a.Nome, $"%{termo}%") ||
+                    (a.Matricula != null && EF.Functions.Like(a.Matricula, $"%{termo}%")));
+            }
+
+            if (idCurso.HasValue)
+            {
+                query = query.Where(a => a.IdCurso == idCurso.Value);
+            }
+
+            if (idModulo.HasValue)
+            {
+                query = query.Where(a => a.Modulos.Any(am => am.IdModulo == idModulo.Value));
+            }
+
+            // Projeção com os números crus; a situação do aluno é calculada em memória
+            // logo abaixo, porque envolve comparação entre contagens.
+            var projecao = query
+                .OrderBy(a => a.Nome)
+                .Select(a => new
+                {
+                    a.IdAluno,
+                    a.Nome,
+                    a.Matricula,
+                    NomeCurso = a.Curso.Nome,
+                    TotalModulosCurso = a.Curso.Modulos.Count(m => m.Status),
+                    Aprovados = a.Modulos.Count(am => am.StatusInscricao == EnumStatus.Aprovado),
+                    EmAndamento = a.Modulos.Count(am => am.StatusInscricao == EnumStatus.EmAndamento),
+                    // Módulo atual = o de maior número entre os que estão em andamento.
+                    ModuloAtual = a.Modulos
+                        .Where(am => am.StatusInscricao == EnumStatus.EmAndamento)
+                        .OrderByDescending(am => am.Modulo.Numero)
+                        .Select(am => am.Modulo.Nome)
+                        .FirstOrDefault()
+                });
+
+            var paginado = await projecao.Paginar(new PaginationRequest
+            {
+                NumeroPagina = pagina < 1 ? 1 : pagina,
+                TamanhoPagina = TamanhoPaginaAlunos
+            });
+
+            return new PagedResult<AlunoListagemDto>
+            {
+                TotalItems = paginado.TotalItems,
+                TamanhoPagina = paginado.TamanhoPagina,
+                PaginaAtual = paginado.PaginaAtual,
+                Items = paginado.Items
+                    .Select(a => new AlunoListagemDto(
+                        a.IdAluno,
+                        a.Nome,
+                        a.Matricula,
+                        a.NomeCurso,
+                        a.ModuloAtual,
+                        CalcularStatusAluno(a.EmAndamento, a.Aprovados, a.TotalModulosCurso)))
+                    .ToList()
+            };
+        }
+
+        /// <summary>
+        /// Detalhes do aluno selecionado: dados de identificação, situação, quantos
+        /// módulos já concluiu (sobre o total do curso), todas as inscrições dele
+        /// ordenadas pelo número do módulo e, à parte, só as reprovadas.
+        /// Retorna null quando o aluno não existe.
+        /// </summary>
+        /// <remarks>
+        /// Data de inscrição = DataMatricula; quando ela não vem preenchida (comum nos
+        /// registros importados do CSV), cai para DataAcesso, que é obrigatória.
+        /// A lista traz as inscrições do aluno — módulos do curso em que ele nunca se
+        /// inscreveu não aparecem, mas entram no total do "concluídos / total".
+        /// </remarks>
+        public async Task<AlunoDetalhesDto?> ObterDetalhesDoAlunoAsync(int idAluno)
+        {
+            var dados = await _context.Alunos
+                .Where(a => a.IdAluno == idAluno)
+                .Select(a => new
+                {
+                    a.IdAluno,
+                    a.Nome,
+                    a.Matricula,
+                    NomeCurso = a.Curso.Nome,
+                    TotalModulosCurso = a.Curso.Modulos.Count(m => m.Status),
+                    Aprovados = a.Modulos.Count(am => am.StatusInscricao == EnumStatus.Aprovado),
+                    EmAndamento = a.Modulos.Count(am => am.StatusInscricao == EnumStatus.EmAndamento),
+                    Modulos = a.Modulos
+                        .OrderBy(am => am.Modulo.Numero)
+                        .Select(am => new AlunoModuloDetalheDto(
+                            am.IdModulo,
+                            am.Modulo.Nome,
+                            am.Modulo.Numero,
+                            am.DataMatricula ?? am.DataAcesso,
+                            am.DataConclusao,
+                            am.Nota,
+                            am.StatusInscricao))
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (dados is null)
+            {
+                return null;
+            }
+
+            return new AlunoDetalhesDto(
+                dados.IdAluno,
+                dados.Nome,
+                dados.Matricula,
+                dados.NomeCurso,
+                CalcularStatusAluno(dados.EmAndamento, dados.Aprovados, dados.TotalModulosCurso),
+                dados.Aprovados,
+                dados.TotalModulosCurso,
+                dados.Modulos,
+                dados.Modulos.Where(m => m.Status == EnumStatus.Reprovado).ToList());
+        }
+
+        /// <summary>
+        /// Situação do aluno a partir das inscrições dele:
+        /// Cursando quando há módulo em andamento; Finalizado quando não há andamento e
+        /// ele aprovou todos os módulos ativos do curso; Em espera nos demais casos
+        /// (parou no meio, só tem inscrição cancelada/reprovada, ou ainda não começou).
+        /// </summary>
+        private static EnumStatusAluno CalcularStatusAluno(int emAndamento, int aprovados, int totalModulosCurso)
+        {
+            if (emAndamento > 0)
+            {
+                return EnumStatusAluno.Cursando;
+            }
+
+            if (totalModulosCurso > 0 && aprovados >= totalModulosCurso)
+            {
+                return EnumStatusAluno.Finalizado;
+            }
+
+            return EnumStatusAluno.EmEspera;
+        }
     }
 }
