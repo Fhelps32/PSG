@@ -1,0 +1,106 @@
+@* Views/Inscricao/_EditInscricaoModalPartial.cshtml *@
+@using PSG.Domain.Enum
+@model PSG.Presentation.Models.Incricao.InscricaoEditViewModel
+
+<div id="modalEditarInscricao"
+     class="fixed inset-0 z-50 flex items-center justify-center">
+
+    @* Backdrop escuro, clicar fora fecha a modal *@
+    <div id="modalBackdropEdicao" class="absolute inset-0 bg-black/50"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-lg w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+
+        <form id="formEditarInscricao" asp-action="Editar" asp-controller="Inscricao" method="post">
+
+            <input type="hidden" asp-for="IdAlunoModulo" />
+            <input type="hidden" asp-for="NomeAluno" />
+            <input type="hidden" asp-for="NomeCurso" />
+            <input type="hidden" asp-for="NomeModulo" />
+            <input type="hidden" asp-for="NumeroModulo" />
+
+            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <h5 class="font-bold text-slate-800">Editar inscrição</h5>
+                <button type="button" id="btnFecharModalEdicao"
+                        class="text-slate-400 hover:text-slate-600 text-xl leading-none">
+                    &times;
+                </button>
+            </div>
+
+            <div class="px-5 py-4 space-y-4">
+
+                <div id="erroGeralEdicao" class="hidden bg-red-50 text-red-600 text-sm rounded-lg px-3 py-2"></div>
+
+                @* Contexto: quem e onde. Mudar isso seria outra inscrição, não uma edição. *@
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-sm font-semibold text-slate-800">@Model.NomeAluno</p>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        @Model.NomeCurso
+                        <span class="text-slate-300 mx-1">|</span>
+                        @Model.NumeroModulo.ToString("00") - @Model.NomeModulo
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Data de início</label>
+                        <input asp-for="DataInicio" type="date"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="DataInicio" class="text-xs text-red-500"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Data de fim</label>
+                        <input asp-for="DataFim" type="date"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="DataFim" class="text-xs text-red-500"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Data de matrícula</label>
+                        <input asp-for="DataMatricula" type="date"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="DataMatricula" class="text-xs text-red-500"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Nota</label>
+                        <input asp-for="Nota" type="number" step="0.1" min="0" max="10"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                        <span asp-validation-for="Nota" class="text-xs text-red-500"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5">Status</label>
+                    <select asp-for="StatusInscricao" asp-items="Html.GetEnumSelectList<EnumStatus>()"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    </select>
+                    <span asp-validation-for="StatusInscricao" class="text-xs text-red-500"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5">Observação</label>
+                    <textarea asp-for="ObsGeral" rows="2" maxlength="500"
+                              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"></textarea>
+                    <span asp-validation-for="ObsGeral" class="text-xs text-red-500"></span>
+                </div>
+
+            </div>
+
+            <div class="border-t border-slate-100 px-5 py-4 flex justify-end gap-2">
+                <button type="button" id="btnCancelarModalEdicao"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50">
+                    Cancelar
+                </button>
+                <button type="submit" id="btnSalvarInscricaoEdicao"
+                        class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                    <i class="bi bi-check-lg"></i>
+                    Salvar
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
