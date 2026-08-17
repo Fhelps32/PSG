@@ -9,8 +9,7 @@ namespace PSG.Application.Servicos.Cursos
 
     /// <summary>
     /// Uma linha da listagem de cursos (coluna da esquerda da tela de Cursos).
-    /// Sigla e NomeCoordenador vêm nulos: nenhum dos dois existe no Domain hoje
-    /// (Curso não tem sigla e não há entidade Professor/Coordenador).
+    /// Sigla vem nula: o Curso ainda não tem esse campo no Domain.
     /// </summary>
     public sealed record CursoListagemDto(
         int IdCurso,
@@ -37,8 +36,7 @@ namespace PSG.Application.Servicos.Cursos
     );
 
     /// <summary>
-    /// Módulo dentro do painel de detalhes. NomeProfessor vem nulo pelo mesmo
-    /// motivo do coordenador: não existe entidade Professor no Domain.
+    /// Módulo dentro do painel de detalhes, com o professor que o ministra.
     /// </summary>
     public sealed record ModuloCursoDto(
         int IdModulo,

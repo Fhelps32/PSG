@@ -34,7 +34,8 @@ namespace PSG.Application.Servicos.Modulos
     /// <summary>Campos editáveis de um módulo (usado pela modal de edição).</summary>
     public sealed record ModuloDtoAtualizar(
         string Nome,
-        int Numero
+        int Numero,
+        int IdProfessor
     );
 
     /// <summary>
@@ -46,6 +47,8 @@ namespace PSG.Application.Servicos.Modulos
         int IdCurso,
         string NomeCurso,
         string Nome,
-        int Numero
+        int Numero,
+        int IdProfessor,
+        string NomeProfessor
     );
 }

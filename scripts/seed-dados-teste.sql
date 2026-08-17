@@ -14,6 +14,8 @@
    fazendo sentido independentemente de quando o script for rodado.
 
    O que os dados cobrem:
+     - 10 professores: um coordena cada curso e os módulos se dividem entre eles,
+       então a tela de cursos mostra quem ministra cada módulo
      - 5 cursos, sendo um sem módulo e sem aluno (estados vazios das telas)
      - um curso com 12 módulos (rolagem da legenda do gráfico e da lista)
      - 45 alunos: Cursando, Finalizado e Em espera (paginação de 20 por página)
@@ -57,7 +59,12 @@ VALUES
     (N'SEED-P002', N'Renata Lopes Ferreira'),
     (N'SEED-P003', N'Paulo Henrique Braga'),
     (N'SEED-P004', N'Juliana Castro Mendes'),
-    (N'SEED-P005', N'Eduardo Tavares Pinto');
+    (N'SEED-P005', N'Eduardo Tavares Pinto'),
+    (N'SEED-P006', N'Cristina Amaral Bueno'),
+    (N'SEED-P007', N'Sérgio Luiz Camargo'),
+    (N'SEED-P008', N'Adriana Peixoto Lemos'),
+    (N'SEED-P009', N'Fernando Bueno Rezende'),
+    (N'SEED-P010', N'Luciana Moraes Prado');
 
 /* ---------------------------------------------------------------------------
    3) Cursos (cada um com seu coordenador)
@@ -86,31 +93,31 @@ OUTPUT inserted.IdModulo, inserted.IdCurso, inserted.Numero INTO @modulos (IdMod
 SELECT c.IdCurso, v.Nome, v.Numero, DATEADD(DAY, v.Dias, @hoje), 1, p.IdProfessor
 FROM (VALUES
     (CAST(N'Desenvolvimento de Sistemas' AS NVARCHAR(100)), CAST(N'Lógica de Programação' AS NVARCHAR(100)), 1, -519, CAST(N'SEED-P001' AS NVARCHAR(50))),
-    (N'Desenvolvimento de Sistemas', N'Banco de Dados', 2, -518, N'SEED-P003'),
-    (N'Desenvolvimento de Sistemas', N'Front-end com HTML e CSS', 3, -517, N'SEED-P005'),
-    (N'Desenvolvimento de Sistemas', N'JavaScript Essencial', 4, -516, N'SEED-P001'),
-    (N'Desenvolvimento de Sistemas', N'Programação em C#', 5, -515, N'SEED-P003'),
-    (N'Desenvolvimento de Sistemas', N'Orientação a Objetos', 6, -514, N'SEED-P005'),
-    (N'Desenvolvimento de Sistemas', N'ASP.NET Core', 7, -513, N'SEED-P001'),
-    (N'Desenvolvimento de Sistemas', N'Entity Framework', 8, -512, N'SEED-P003'),
-    (N'Desenvolvimento de Sistemas', N'Arquitetura de Software', 9, -511, N'SEED-P005'),
-    (N'Desenvolvimento de Sistemas', N'Testes Automatizados', 10, -510, N'SEED-P001'),
-    (N'Desenvolvimento de Sistemas', N'DevOps e Cloud', 11, -509, N'SEED-P003'),
-    (N'Desenvolvimento de Sistemas', N'Projeto Integrador', 12, -508, N'SEED-P005'),
+    (N'Desenvolvimento de Sistemas', N'Banco de Dados', 2, -518, N'SEED-P006'),
+    (N'Desenvolvimento de Sistemas', N'Front-end com HTML e CSS', 3, -517, N'SEED-P007'),
+    (N'Desenvolvimento de Sistemas', N'JavaScript Essencial', 4, -516, N'SEED-P009'),
+    (N'Desenvolvimento de Sistemas', N'Programação em C#', 5, -515, N'SEED-P001'),
+    (N'Desenvolvimento de Sistemas', N'Orientação a Objetos', 6, -514, N'SEED-P006'),
+    (N'Desenvolvimento de Sistemas', N'ASP.NET Core', 7, -513, N'SEED-P007'),
+    (N'Desenvolvimento de Sistemas', N'Entity Framework', 8, -512, N'SEED-P009'),
+    (N'Desenvolvimento de Sistemas', N'Arquitetura de Software', 9, -511, N'SEED-P001'),
+    (N'Desenvolvimento de Sistemas', N'Testes Automatizados', 10, -510, N'SEED-P006'),
+    (N'Desenvolvimento de Sistemas', N'DevOps e Cloud', 11, -509, N'SEED-P007'),
+    (N'Desenvolvimento de Sistemas', N'Projeto Integrador', 12, -508, N'SEED-P009'),
     (N'Administração', N'Fundamentos da Administração', 1, -479, N'SEED-P002'),
-    (N'Administração', N'Contabilidade Gerencial', 2, -478, N'SEED-P004'),
-    (N'Administração', N'Gestão de Pessoas', 3, -477, N'SEED-P002'),
-    (N'Administração', N'Marketing Estratégico', 4, -476, N'SEED-P004'),
-    (N'Administração', N'Finanças Corporativas', 5, -475, N'SEED-P002'),
-    (N'Administração', N'Planejamento Estratégico', 6, -474, N'SEED-P004'),
+    (N'Administração', N'Contabilidade Gerencial', 2, -478, N'SEED-P008'),
+    (N'Administração', N'Gestão de Pessoas', 3, -477, N'SEED-P010'),
+    (N'Administração', N'Marketing Estratégico', 4, -476, N'SEED-P002'),
+    (N'Administração', N'Finanças Corporativas', 5, -475, N'SEED-P008'),
+    (N'Administração', N'Planejamento Estratégico', 6, -474, N'SEED-P010'),
     (N'Enfermagem do Trabalho', N'Saúde Ocupacional', 1, -449, N'SEED-P003'),
-    (N'Enfermagem do Trabalho', N'Ergonomia Aplicada', 2, -448, N'SEED-P001'),
-    (N'Enfermagem do Trabalho', N'Primeiros Socorros', 3, -447, N'SEED-P003'),
-    (N'Enfermagem do Trabalho', N'Legislação em Saúde', 4, -446, N'SEED-P001'),
-    (N'Enfermagem do Trabalho', N'Gestão de Riscos', 5, -445, N'SEED-P003'),
+    (N'Enfermagem do Trabalho', N'Ergonomia Aplicada', 2, -448, N'SEED-P006'),
+    (N'Enfermagem do Trabalho', N'Primeiros Socorros', 3, -447, N'SEED-P008'),
+    (N'Enfermagem do Trabalho', N'Legislação em Saúde', 4, -446, N'SEED-P003'),
+    (N'Enfermagem do Trabalho', N'Gestão de Riscos', 5, -445, N'SEED-P006'),
     (N'Logística', N'Cadeia de Suprimentos', 1, -279, N'SEED-P004'),
-    (N'Logística', N'Gestão de Estoques', 2, -278, N'SEED-P002'),
-    (N'Logística', N'Transporte e Distribuição', 3, -277, N'SEED-P004')
+    (N'Logística', N'Gestão de Estoques', 2, -278, N'SEED-P010'),
+    (N'Logística', N'Transporte e Distribuição', 3, -277, N'SEED-P007')
     ) AS v(NomeCurso, Nome, Numero, Dias, MatriculaProfessor)
 JOIN @cursos c      ON c.Nome = v.NomeCurso
 JOIN @professores p ON p.Matricula = v.MatriculaProfessor;

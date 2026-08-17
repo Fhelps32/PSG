@@ -1,17 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using PSG.Application.Servicos.Cursos;
 using PSG.Application.Servicos.Modulos;
+using PSG.Application.Servicos.Professores;
 using PSG.Presentation.Models.Curso;
 
 namespace PSG.Presentation.Controllers
 {
     public class CursoController(
         CursoService cursoService,
-        ModuloService moduloService
+        ModuloService moduloService,
+        ProfessorService professorService
         ) : Controller
     {
         private readonly CursoService _cursoService = cursoService;
         private readonly ModuloService _moduloService = moduloService;
+        private readonly ProfessorService _professorService = professorService;
 
         /// <summary>
         /// Tela de cursos: listagem à esquerda e, à direita, os detalhes do curso
@@ -95,7 +99,9 @@ namespace PSG.Presentation.Controllers
                 IdCurso = modulo.IdCurso,
                 NomeCurso = modulo.NomeCurso,
                 Nome = modulo.Nome,
-                Numero = modulo.Numero
+                Numero = modulo.Numero,
+                IdProfessor = modulo.IdProfessor,
+                Professores = await ObterProfessoresSelectListAsync()
             };
 
             return PartialView("_EditModuloModalPartial", viewModel);
@@ -112,15 +118,35 @@ namespace PSG.Presentation.Controllers
         {
             if (!ModelState.IsValid)
             {
+                // O dropdown de professor não volta no POST: sem repovoar, a modal
+                // re-renderizada com as mensagens de validação viria com o select vazio.
+                viewModel.Professores = await ObterProfessoresSelectListAsync();
+
                 Response.StatusCode = StatusCodes.Status400BadRequest;
                 return PartialView("_EditModuloModalPartial", viewModel);
             }
 
             await _moduloService.AtualizarModuloAsync(
                 viewModel.IdModulo,
-                new ModuloDtoAtualizar(viewModel.Nome, viewModel.Numero));
+                new ModuloDtoAtualizar(viewModel.Nome, viewModel.Numero, viewModel.IdProfessor));
 
             return Ok();
+        }
+
+        /// <summary>
+        /// Professores para o dropdown da modal, com a matrícula ao lado do nome
+        /// para diferenciar homônimos.
+        /// </summary>
+        private async Task<List<SelectListItem>> ObterProfessoresSelectListAsync()
+        {
+            var professores = await _professorService.ObterTodosOsProfessoresAsync();
+            return professores
+                .Select(p => new SelectListItem
+                {
+                    Value = p.IdProfessor.ToString(),
+                    Text = string.IsNullOrWhiteSpace(p.Matricula) ? p.Nome : $"{p.Nome} ({p.Matricula})"
+                })
+                .ToList();
         }
 
         /// <summary>

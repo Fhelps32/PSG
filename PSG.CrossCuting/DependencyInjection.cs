@@ -8,6 +8,7 @@ using PSG.Application.Servicos.Alunos;
 using PSG.Application.Servicos.Csv;
 using PSG.Application.Servicos.Cursos;
 using PSG.Application.Servicos.Modulos;
+using PSG.Application.Servicos.Professores;
 using PSG.Domain;
 using PSG.Infra.Data;
 using PSG.Infra.Data.Csv;
@@ -31,6 +32,7 @@ namespace PSG.CrossCuting
             services.AddScoped<AlunoModuloService>();
             services.AddScoped<CursoService>();
             services.AddScoped<ModuloService>();
+            services.AddScoped<ProfessorService>();
             services.AddScoped<AlunoService>();
 
             return services;

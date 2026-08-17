@@ -52,12 +52,12 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1.5">Professor</label>
-                    @* Desabilitado enquanto não existir a entidade Professor no Domain. *@
-                    <input type="text" value="Não informado" disabled
-                           class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400" />
-                    <span class="text-[11px] text-slate-400">
-                        A vinculação de professor ainda não existe no sistema.
-                    </span>
+                    @* Quem ministra o módulo. É obrigatório: a FK do módulo exige professor. *@
+                    <select asp-for="IdProfessor" asp-items="Model.Professores"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <span asp-validation-for="IdProfessor" class="text-xs text-red-500"></span>
                 </div>
 
             </div>
