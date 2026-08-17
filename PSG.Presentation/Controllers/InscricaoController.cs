@@ -57,6 +57,7 @@ namespace PSG.Presentation.Controllers
                 // Projeta as entidades para o item da tabela
                 Inscricoes = resultado.Items.Select(am => new InscricaoItemViewModel
                 {
+                    IdAlunoModulo = am.IdAlunoModulo,
                     NomeAluno = am.Aluno.Nome,
                     NomeCurso = am.Modulo.Curso.Nome,
                     NomeModulo = am.Modulo.Nome,
@@ -166,6 +167,76 @@ namespace PSG.Presentation.Controllers
             // (Antes fazia RedirectToAction("IndexAsync"); porém, por convenção, o nome da
             //  action é "Index" — o fetch seguia o redirect para /Inscricao/IndexAsync, que
             //  retorna 404, gerando o "falso erro" mesmo com a inscrição já criada.)
+            return Ok();
+        }
+
+        /// <summary>
+        /// Devolve a modal de edição da inscrição já preenchida. Chamada por fetch a
+        /// partir da tabela — por isso PartialView, e não uma página nova.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> EditarModal(int idAlunoModulo)
+        {
+            var inscricao = await alunoModuloService.ObterInscricaoParaEdicaoAsync(idAlunoModulo);
+            if (inscricao is null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new InscricaoEditViewModel
+            {
+                IdAlunoModulo = inscricao.IdAlunoModulo,
+                NomeAluno = inscricao.NomeAluno,
+                NomeCurso = inscricao.NomeCurso,
+                NomeModulo = inscricao.NomeModulo,
+                NumeroModulo = inscricao.NumeroModulo,
+                DataInicio = inscricao.DataInicio,
+                DataFim = inscricao.DataFim,
+                DataMatricula = inscricao.DataMatricula,
+                Nota = inscricao.Nota,
+                StatusInscricao = inscricao.EnumStatus,
+                ObsGeral = inscricao.ObsGeral
+            };
+
+            return PartialView("_EditInscricaoModalPartial", viewModel);
+        }
+
+        /// <summary>
+        /// Salva a edição da inscrição. Mesmo contrato da modal de criação: 400 + a
+        /// modal re-renderizada quando há erro de validação, 200 quando salva (o front
+        /// recarrega a tabela).
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Editar(InscricaoEditViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = StatusCodes.Status400BadRequest;
+                return PartialView("_EditInscricaoModalPartial", viewModel);
+            }
+
+            await alunoModuloService.AtualizarInscricaoAsync(
+                viewModel.IdAlunoModulo,
+                new AlunoModuloDtoAtualizar(
+                    viewModel.DataInicio,
+                    viewModel.DataFim,
+                    viewModel.DataMatricula,
+                    viewModel.Nota,
+                    viewModel.StatusInscricao,
+                    viewModel.ObsGeral));
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Exclusão lógica da inscrição (Status = false no service).
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Excluir(int idAlunoModulo)
+        {
+            await alunoModuloService.ExcluirInscricaoAsync(idAlunoModulo);
             return Ok();
         }
 

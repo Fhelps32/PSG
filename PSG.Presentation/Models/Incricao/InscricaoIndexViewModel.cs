@@ -28,6 +28,8 @@ namespace PSG.Presentation.Models.Incricao
 
     public class InscricaoItemViewModel
     {
+        // Necessário para os botões de editar/excluir da linha.
+        public int IdAlunoModulo { get; set; }
         public string NomeAluno { get; set; }
         public string NomeCurso { get; set; }
         public string NomeModulo { get; set; }
