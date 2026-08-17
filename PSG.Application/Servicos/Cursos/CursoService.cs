@@ -80,6 +80,7 @@ namespace PSG.Application.Servicos.Cursos
                 {
                     c.IdCurso,
                     c.Nome,
+                    NomeCoordenador = c.Coordenador.Nome,
                     Total = c.Alunos.Count(),
                     Cancelados = c.Alunos.Count(a => a.Modulos.Any(am => am.StatusInscricao == EnumStatus.Cancelado))
                 })
@@ -89,9 +90,9 @@ namespace PSG.Application.Servicos.Cursos
                 .Select(d => new CursoListagemDto(
                     d.IdCurso,
                     d.Nome,
-                    // Sigla e coordenador ainda não existem no Domain.
+                    // Sigla ainda não existe no Domain.
                     Sigla: null,
-                    NomeCoordenador: null,
+                    d.NomeCoordenador,
                     d.Total,
                     CalcularTaxa(d.Cancelados, d.Total)))
                 .ToList();
@@ -130,6 +131,7 @@ namespace PSG.Application.Servicos.Cursos
                             m.IdModulo,
                             m.Nome,
                             m.Numero,
+                            NomeProfessor = m.Professor.Nome,
                             Total = m.Alunos.Count(am => am.Status)
                         })
                         .ToList()
@@ -156,8 +158,7 @@ namespace PSG.Application.Servicos.Cursos
                         m.IdModulo,
                         m.Nome,
                         m.Numero,
-                        // Professor ainda não existe no Domain.
-                        NomeProfessor: null,
+                        m.NomeProfessor,
                         m.Total))
                     .ToList());
         }

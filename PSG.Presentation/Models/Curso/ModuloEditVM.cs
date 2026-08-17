@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace PSG.Presentation.Models.Curso
@@ -24,5 +25,15 @@ namespace PSG.Presentation.Models.Curso
         [Range(1, 999, ErrorMessage = "O número deve estar entre 1 e 999.")]
         [Display(Name = "Número")]
         public int Numero { get; set; }
+
+        // Professor que ministra o módulo. Obrigatório porque a FK é obrigatória:
+        // Range a partir de 1 rejeita o "Selecione..." (que chega como 0).
+        [Range(1, int.MaxValue, ErrorMessage = "Selecione o professor do módulo.")]
+        [Display(Name = "Professor")]
+        public int IdProfessor { get; set; }
+
+        // Opções do dropdown de professor. Precisa ser repovoado quando a modal é
+        // devolvida com erro de validação, senão o select volta vazio.
+        public List<SelectListItem> Professores { get; set; } = new List<SelectListItem>();
     }
 }

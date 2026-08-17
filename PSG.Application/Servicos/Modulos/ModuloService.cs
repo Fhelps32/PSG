@@ -81,12 +81,16 @@ namespace PSG.Application.Servicos.Modulos
                     m.IdCurso,
                     m.Curso.Nome,
                     m.Nome,
-                    m.Numero))
+                    m.Numero,
+                    m.IdProfessor,
+                    m.Professor.Nome))
                 .FirstOrDefaultAsync();
         }
 
         /// <summary>
-        /// Atualiza nome e número do módulo. Lança exceção quando o módulo não existe.
+        /// Atualiza nome, número e professor do módulo. Lança exceção quando o módulo
+        /// não existe ou quando o professor informado não existe — o segundo caso
+        /// evita cair numa violação de FK genérica na hora de salvar.
         /// </summary>
         public async Task AtualizarModuloAsync(int idModulo, ModuloDtoAtualizar dto)
         {
@@ -96,8 +100,16 @@ namespace PSG.Application.Servicos.Modulos
                 throw new Exception($"Módulo com ID {idModulo} não encontrado.");
             }
 
+            var professorExiste = await _context.Professores
+                .AnyAsync(p => p.IdProfessor == dto.IdProfessor);
+            if (!professorExiste)
+            {
+                throw new Exception($"Professor com ID {dto.IdProfessor} não encontrado.");
+            }
+
             modulo.Nome = dto.Nome;
             modulo.Numero = dto.Numero;
+            modulo.IdProfessor = dto.IdProfessor;
 
             await _context.SaveChangesAsync();
         }
