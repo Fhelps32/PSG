@@ -1,0 +1,344 @@
+@using PSG.Presentation.Models.Relatorio
+@model RelatorioIndexVM
+@{
+    ViewData["Title"] = "Relatórios";
+}
+
+@* ===== Cabeçalho da página ===== *@
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-800">Relatórios</h1>
+    <p class="text-slate-500 text-sm mt-1">Configure os filtros, confira a prévia e exporte em Excel ou CSV</p>
+</div>
+
+@Html.AntiForgeryToken()
+
+<form id="formRelatorio" class="flex flex-col gap-6">
+
+    @* ===================== CARD: FILTROS ===================== *@
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+        <h2 class="text-sm font-bold text-slate-800 mb-4">Filtros do relatório</h2>
+
+        <div id="painelFiltros" class="flex flex-col gap-5">
+
+            @* ----- Relatório sobre ----- *@
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-2">Relatório sobre</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo" value="Alunos" class="peer hidden" checked />
+                        <span class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            <i class="bi bi-person"></i> Aluno(s)
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo" value="Modulos" class="peer hidden" />
+                        <span class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            <i class="bi bi-collection"></i> Módulos
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo" value="Cursos" class="peer hidden" />
+                        <span class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            <i class="bi bi-book"></i> Cursos
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            @* ----- Escopo (só para Alunos): um aluno específico ou vários por filtro ----- *@
+            <div id="blocoEscopo">
+                <label class="block text-xs font-semibold text-slate-500 mb-2">Sobre quais alunos?</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="escopo" value="Especifico" class="peer hidden" />
+                        <span class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            <i class="bi bi-person-check"></i> Um aluno específico
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="escopo" value="Filtros" class="peer hidden" checked />
+                        <span class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            <i class="bi bi-people"></i> Vários, com filtros
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            @* ----- Aluno específico ----- *@
+            <div id="blocoAlunoEspecifico" class="hidden">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Aluno</label>
+                <select name="idAluno" asp-items="Model.Alunos"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+
+            @* ----- Curso: filtro de "alunos por filtro" e de "módulos" (mesmo campo) ----- *@
+            <div id="blocoCurso" class="hidden">
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Curso</label>
+                <select name="idCurso" asp-items="Model.Cursos"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                    <option value="">Todos os cursos</option>
+                </select>
+            </div>
+
+            @* ----- Status da inscrição + nota (só "alunos por filtro") ----- *@
+            <div id="blocoStatusNota" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1.5">Status</label>
+                    <select name="status" id="selectStatus"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                        <option value="">Todos</option>
+                        <option value="Aprovado">Aprovado</option>
+                        <option value="Reprovado">Reprovado</option>
+                        <option value="EmAndamento">Em andamento</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div id="blocoNota" class="hidden grid grid-cols-[1fr_6rem] gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Nota</label>
+                        <select name="operadorNota"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand">
+                            <option value="MaiorOuIgual">Maior ou igual a</option>
+                            <option value="MenorOuIgual">Menor ou igual a</option>
+                            <option value="IgualA">Igual a</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">&nbsp;</label>
+                        <input type="number" name="nota" step="0.1" min="0" max="10" placeholder="0.0"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                    </div>
+                </div>
+            </div>
+
+            @* ----- Mostrar alunos nos módulos (Módulos e Cursos) ----- *@
+            <div id="blocoMostrarAlunos" class="hidden">
+                <label class="inline-flex items-center gap-3 cursor-pointer select-none">
+                    <span class="relative inline-flex items-center shrink-0">
+                        <input type="checkbox" name="mostrarAlunos" value="true" class="sr-only peer" />
+                        <span class="w-10 h-5 bg-slate-300 rounded-full peer-checked:bg-brand transition-colors"></span>
+                        <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
+                    </span>
+                    <span class="text-sm text-slate-700">Mostrar os alunos inscritos em cada módulo</span>
+                </label>
+            </div>
+
+            @* ----- Período: o recorte de data usado para puxar as informações ----- *@
+            <div class="pt-1 border-t border-slate-100">
+                <label class="block text-xs font-semibold text-slate-500 mb-2 mt-3">Período</label>
+                <div class="flex flex-wrap gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="periodo" value="SemFiltro" class="peer hidden" checked />
+                        <span class="block px-3.5 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            Sem filtro
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="periodo" value="UltimaSemana" class="peer hidden" />
+                        <span class="block px-3.5 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            Última semana
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="periodo" value="UltimoMes" class="peer hidden" />
+                        <span class="block px-3.5 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            Último mês
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="periodo" value="UltimoSemestre" class="peer hidden" />
+                        <span class="block px-3.5 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            Último semestre
+                        </span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="periodo" value="Personalizado" class="peer hidden" />
+                        <span class="block px-3.5 py-1.5 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 peer-checked:border-brand peer-checked:bg-brand-light peer-checked:text-brand transition-colors">
+                            Personalizado
+                        </span>
+                    </label>
+                </div>
+
+                <div id="blocoPeriodoPersonalizado" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Data de início</label>
+                        <input type="date" name="dataInicio"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">Data de fim</label>
+                        <input type="date" name="dataFim"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===================== CARD: PRÉVIA ===================== *@
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div id="previewContainer" class="min-h-[16rem] max-h-[28rem] overflow-y-auto">
+            <partial name="_PreviewRelatorioPartial" model="Model.Preview" />
+        </div>
+    </div>
+
+    @* ===================== BARRA DE AÇÕES ===================== *@
+    <div id="erroGeracao" class="hidden bg-red-50 text-red-600 text-sm rounded-xl px-4 py-3"></div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <button type="button" id="btnGerar"
+                    class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                <i class="bi bi-download"></i> Gerar relatório
+            </button>
+
+            <div class="flex items-center gap-4 text-sm text-slate-600">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="formato" value="xlsx" checked
+                           class="text-brand focus:ring-brand/30" />
+                    .xlsx (Excel)
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="formato" value="csv"
+                           class="text-brand focus:ring-brand/30" />
+                    .csv
+                </label>
+            </div>
+        </div>
+
+        <button type="button" id="btnGerarRapido"
+                class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors">
+            <i class="bi bi-lightning-charge"></i> Gerar relatório rápido
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const form = document.getElementById('formRelatorio');
+        const painelFiltros = document.getElementById('painelFiltros');
+        const previewContainer = document.getElementById('previewContainer');
+        const erroGeracao = document.getElementById('erroGeracao');
+        const btnGerar = document.getElementById('btnGerar');
+        const btnGerarRapido = document.getElementById('btnGerarRapido');
+
+        // ===== Debounce =====
+        // Evita disparar uma requisição a cada tecla nos campos de nota/data.
+        function debounce(fn, ms) {
+        let timer;
+        return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
+        };
+        }
+
+        function valorRadioMarcado(nome) {
+        const el = form.querySelector(`input[name="${nome}"]:checked`);
+        return el ? el.value : '';
+        }
+
+        // ===== Mostra/esconde os blocos de filtro conforme o que está selecionado =====
+        // Reflete literalmente as regras pedidas: Aluno(s) -> específico ou filtros
+        // (com nota só quando o status é Aprovado/Reprovado); Módulos e Cursos
+        // compartilham o mesmo switch "mostrar alunos"; Cursos não tem filtro de curso
+        // (o relatório é sempre de todos).
+        function atualizarVisibilidade() {
+        const tipo = valorRadioMarcado('tipo');
+        const escopo = valorRadioMarcado('escopo');
+        const status = document.getElementById('selectStatus').value;
+        const periodo = valorRadioMarcado('periodo');
+
+        const ehAlunos = tipo === 'Alunos';
+        const ehModulos = tipo === 'Modulos';
+        const ehCursos = tipo === 'Cursos';
+        const alunosPorFiltro = ehAlunos && escopo === 'Filtros';
+        const notaFazSentido = status === 'Aprovado' || status === 'Reprovado';
+
+        document.getElementById('blocoEscopo').classList.toggle('hidden', !ehAlunos);
+        document.getElementById('blocoAlunoEspecifico').classList.toggle('hidden', !(ehAlunos && escopo === 'Especifico'));
+        document.getElementById('blocoCurso').classList.toggle('hidden', !(alunosPorFiltro || ehModulos));
+        document.getElementById('blocoStatusNota').classList.toggle('hidden', !alunosPorFiltro);
+        document.getElementById('blocoNota').classList.toggle('hidden', !(alunosPorFiltro && notaFazSentido));
+        document.getElementById('blocoMostrarAlunos').classList.toggle('hidden', !(ehModulos || ehCursos));
+        document.getElementById('blocoPeriodoPersonalizado').classList.toggle('hidden', periodo !== 'Personalizado');
+        }
+
+        // ===== Prévia =====
+        // Mesma combinação de filtros do formulário, via GET — o resultado troca só
+        // o conteúdo de #previewContainer, sem recarregar a página.
+        async function atualizarPrevia() {
+        const parametros = new URLSearchParams(new FormData(form));
+        const resp = await fetch(`@Url.Action("Preview", "Relatorio")?${parametros.toString()}`);
+        if (resp.ok) {
+        previewContainer.innerHTML = await resp.text();
+        }
+        }
+        const atualizarPreviaComDebounce = debounce(atualizarPrevia, 350);
+
+        // change (selects/radios/checkbox): atualiza na hora.
+        painelFiltros.querySelectorAll('input[type="radio"], input[type="checkbox"], select').forEach(el => {
+        el.addEventListener('change', () => {
+        atualizarVisibilidade();
+        atualizarPrevia();
+        });
+        });
+        // input (nota/datas): espera parar de digitar.
+        painelFiltros.querySelectorAll('input[type="number"], input[type="date"]').forEach(el => {
+        el.addEventListener('input', () => {
+        atualizarVisibilidade();
+        atualizarPreviaComDebounce();
+        });
+        });
+
+        atualizarVisibilidade(); // sincroniza com os campos marcados por padrão
+
+        // ===== Gerar relatório (normal ou rápido) =====
+        // Via fetch, e não um submit comum: assim dá pra mostrar erro de validação
+        // sem sair da página. O download em si é disparado a partir do blob da
+        // resposta — o back-end já manda o Content-Disposition com o nome do arquivo.
+        async function gerarRelatorio(modoRapido) {
+        erroGeracao.classList.add('hidden');
+
+        const botao = modoRapido ? btnGerarRapido : btnGerar;
+        const rotuloOriginal = botao.innerHTML;
+        botao.disabled = true;
+        botao.innerHTML = '<i class="bi bi-hourglass-split"></i> Gerando...';
+
+        try {
+        const dados = new FormData(form);
+        dados.set('modoRapido', modoRapido ? 'true' : 'false');
+
+        const resp = await fetch('@Url.Action("Gerar", "Relatorio")', { method: 'POST', body: dados });
+
+        if (!resp.ok) {
+        erroGeracao.textContent = (await resp.text()) || 'Não foi possível gerar o relatório. Tente novamente.';
+        erroGeracao.classList.remove('hidden');
+        return;
+        }
+
+        const blob = await resp.blob();
+        const disposicao = resp.headers.get('Content-Disposition') || '';
+        const nomeEncontrado = disposicao.match(/filename="?([^";]+)"?/);
+        const nomeArquivo = nomeEncontrado ? nomeEncontrado[1] : 'relatorio';
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = nomeArquivo;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        } finally {
+        botao.disabled = false;
+        botao.innerHTML = rotuloOriginal;
+        }
+        }
+
+        btnGerar.addEventListener('click', () => gerarRelatorio(false));
+        btnGerarRapido.addEventListener('click', () => gerarRelatorio(true));
+    </script>
+}
