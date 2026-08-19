@@ -381,7 +381,9 @@ namespace PSG.Application.Servicos.Alunos
         /// ele aprovou todos os módulos ativos do curso; Em espera nos demais casos
         /// (parou no meio, só tem inscrição cancelada/reprovada, ou ainda não começou).
         /// </summary>
-        private static EnumStatusAluno CalcularStatusAluno(int emAndamento, int aprovados, int totalModulosCurso)
+        // internal (não private): RelatorioService também precisa desta regra para o
+        // relatório de aluno específico, e é a mesma conta em ambos os lugares.
+        internal static EnumStatusAluno CalcularStatusAluno(int emAndamento, int aprovados, int totalModulosCurso)
         {
             if (emAndamento > 0)
             {

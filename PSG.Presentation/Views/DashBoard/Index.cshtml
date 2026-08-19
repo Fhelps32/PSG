@@ -129,11 +129,11 @@
             Ir para Inscrições
         </a>
 
-        <button type="button" id="btnGerarRelatorio"
-                class="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-3 rounded-xl text-sm font-semibold shadow-sm transition-colors">
+        <a asp-controller="Relatorio" asp-action="Index"
+               class="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white px-4 py-3 rounded-xl text-sm font-semibold shadow-sm transition-colors">
             <i class="bi bi-file-earmark-bar-graph"></i>
             Gerar Relatório
-        </button>
+        </a>
 
         @* ----- Card: gráfico de setor -----
            A legenda NÃO é mais desenhada pelo Chart.js dentro do canvas: com muitos
@@ -394,11 +394,6 @@
         const dados = await resp.json();
         // dados esperado: [{ curso: "...", modulo: "..." | null, quantidadeAlunos: 5 }, ...]
         aplicarDadosPizza(Chart.getChart('pieGraphCursos'), dados);
-        });
-
-        // ===== Gerar relatório =====
-        document.getElementById('btnGerarRelatorio').addEventListener('click', () => {
-        window.location.href = '/DashBoard/GerarRelatorio';
         });
     </script>
 }

@@ -9,9 +9,11 @@ using PSG.Application.Servicos.Csv;
 using PSG.Application.Servicos.Cursos;
 using PSG.Application.Servicos.Modulos;
 using PSG.Application.Servicos.Professores;
+using PSG.Application.Servicos.Relatorios;
 using PSG.Domain;
 using PSG.Infra.Data;
 using PSG.Infra.Data.Csv;
+using PSG.Infra.Data.Relatorios;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,12 +30,14 @@ namespace PSG.CrossCuting
         {
             services.AddScoped<IPSGDbContext, PSGDbContext>();
             services.AddScoped<ICsvReaderService, CsvReaderService>();
+            services.AddScoped<IRelatorioExportService, RelatorioExportService>();
             services.AddScoped<CsvImporterService>();
             services.AddScoped<AlunoModuloService>();
             services.AddScoped<CursoService>();
             services.AddScoped<ModuloService>();
             services.AddScoped<ProfessorService>();
             services.AddScoped<AlunoService>();
+            services.AddScoped<RelatorioService>();
 
             return services;
         }

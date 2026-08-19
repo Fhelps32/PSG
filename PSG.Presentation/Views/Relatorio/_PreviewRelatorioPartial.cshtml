@@ -1,0 +1,68 @@
+@* Views/Relatorio/_PreviewRelatorioPartial.cshtml
+   Conteúdo de #previewContainer — devolvido pelo RelatorioController.Preview a cada
+   mudança de filtro e também renderizado direto na carga inicial da página. *@
+@model PSG.Presentation.Models.Relatorio.RelatorioResultadoVM
+
+@if (Model.TemErro)
+{
+    <div class="flex flex-col items-center justify-center text-center text-slate-400 py-16 px-4">
+        <i class="bi bi-funnel text-3xl block mb-2"></i>
+        <span class="text-sm">@Model.Mensagem</span>
+    </div>
+}
+else
+{
+    <div class="px-5 pt-4 pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-800">@Model.Titulo</h3>
+        @if (!string.IsNullOrWhiteSpace(Model.Subtitulo))
+        {
+            <p class="text-xs text-slate-500 mt-0.5">@Model.Subtitulo</p>
+        }
+        <p class="text-[11px] text-slate-400 mt-1.5">
+            <i class="bi bi-clock-history"></i> Gerado em @Model.GeradoEmTexto
+            <span class="mx-1.5">·</span>
+            <i class="bi bi-calendar-range"></i> Período: @Model.PeriodoTexto
+        </p>
+    </div>
+
+    @if (!Model.Colunas.Any())
+    {
+        <div class="text-center text-slate-400 py-16 px-4">
+            <i class="bi bi-inbox text-3xl block mb-2"></i>
+            <span class="text-sm">Nenhum registro encontrado para os filtros escolhidos.</span>
+        </div>
+    }
+    else
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b border-slate-100 sticky top-0 bg-white">
+                        @foreach (var coluna in Model.Colunas)
+                        {
+                            <th class="px-4 py-2.5 font-semibold whitespace-nowrap">@coluna</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var linha in Model.Linhas)
+                    {
+                        <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                            @foreach (var valor in linha)
+                            {
+                                <td class="px-4 py-2 text-slate-600 whitespace-nowrap">@valor</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.Truncado)
+        {
+            <p class="text-center text-[11px] text-slate-400 py-3 border-t border-slate-100">
+                Mostrando @Model.Linhas.Count de @Model.TotalLinhas linhas · exporte para ver todas
+            </p>
+        }
+    }
+}
