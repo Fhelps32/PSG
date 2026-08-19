@@ -301,7 +301,7 @@ namespace PSG.Application.Servicos.Relatorios
                     })
                     .ToListAsync();
 
-                var linhas = modulos
+                var linhasModulos = modulos
                     .Select(m => new List<string>
                     {
                         m.NomeCurso, m.Numero.ToString("00"), m.Nome, m.NomeProfessor, m.QuantidadeAlunos.ToString()
@@ -310,7 +310,7 @@ namespace PSG.Application.Servicos.Relatorios
 
                 return new RelatorioResultadoDto(titulo, null, DateTime.Now, null, null,
                     new List<string> { "Curso", "Número", "Módulo", "Professor", "Quantidade de Alunos" },
-                    linhas);
+                    linhasModulos);
             }
 
             var inscricoes = await query
@@ -331,7 +331,7 @@ namespace PSG.Application.Servicos.Relatorios
                     }))
                 .ToListAsync();
 
-            var linhas = inscricoes
+            var linhasInscricoes = inscricoes
                 .Where(i => NoPeriodo(i.DataAcesso, periodoInicio, periodoFim))
                 .Select(i => new List<string>
                 {
@@ -348,7 +348,7 @@ namespace PSG.Application.Servicos.Relatorios
 
             return new RelatorioResultadoDto(titulo, null, DateTime.Now, null, null,
                 new List<string> { "Curso", "Número", "Módulo", "Professor", "Aluno", "Matrícula", "Status", "Nota" },
-                linhas);
+                linhasInscricoes);
         }
 
         /// <summary>
