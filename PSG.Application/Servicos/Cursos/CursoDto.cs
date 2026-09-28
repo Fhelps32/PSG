@@ -8,6 +8,17 @@ namespace PSG.Application.Servicos.Cursos
     );
 
     /// <summary>
+    /// Inscrições de um curso separadas por status (card do dashboard).
+    /// </summary>
+    public sealed record CursoSituacaoInscricoesDto(
+        string NomeCurso,
+        int Aprovados,
+        int EmAndamento,
+        int Reprovados,
+        int Cancelados
+    );
+
+    /// <summary>
     /// Uma linha da listagem de cursos (coluna da esquerda da tela de Cursos).
     /// Sigla vem nula: o Curso ainda não tem esse campo no Domain.
     /// </summary>

@@ -119,10 +119,14 @@
             </div>
         </form>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 min-h-[30rem]">
+        @* Altura fixa (acompanha a altura da janela em telas grandes) e rolagem só na
+           lista: o cabeçalho com total e paginação fica sempre visível e a página
+           não precisa rolar inteira para ver os alunos. 14.5rem = padding do main +
+           título da página + formulário de filtros. *@
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 flex flex-col h-[36rem] lg:h-[calc(100vh-14.5rem)] lg:min-h-[28rem]">
 
             @* Total + paginação *@
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="shrink-0 flex flex-wrap items-center justify-between gap-3 mb-4">
                 <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
                     Quantidade de alunos:
                     <span class="font-bold text-slate-800">@Model.TotalItems</span>
@@ -185,14 +189,15 @@
 
             @if (Model.Alunos.Any())
             {
-                <div class="flex flex-col gap-2">
+                <div id="listaAlunos" class="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
                     @foreach (var aluno in Model.Alunos)
                     {
                         var selecionado = aluno.IdAluno == detalhes.IdAluno;
 
                         <a asp-action="Index" asp-all-route-data="rotaFiltros"
                            asp-route-pagina="@Model.PaginaAtual" asp-route-alunoId="@aluno.IdAluno"
-                           class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors @(selecionado ? "border-brand bg-brand-light" : "border-slate-200 hover:border-brand hover:bg-slate-50")">
+                           data-selecionado="@(selecionado ? "true" : null)"
+                           class="shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors @(selecionado ? "border-brand bg-brand-light" : "border-slate-200 hover:border-brand hover:bg-slate-50")">
 
                             <span class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center @(selecionado ? "bg-brand text-white" : "bg-brand-light text-brand")">
                                 <i class="bi bi-person text-lg"></i>
@@ -381,6 +386,20 @@
 
 @section Scripts {
     <script>
+        // ===== Aluno selecionado visível na lista =====
+        // Selecionar um aluno recarrega a página e a lista volta ao topo; aqui ela
+        // rola (só a lista, não a página) até deixar o selecionado à vista.
+        (function () {
+        const lista = document.getElementById('listaAlunos');
+        const selecionado = lista && lista.querySelector('[data-selecionado="true"]');
+        if (!selecionado) return;
+
+        const topo = selecionado.offsetTop - lista.offsetTop;
+        if (topo + selecionado.offsetHeight > lista.clientHeight) {
+        lista.scrollTop = topo - (lista.clientHeight - selecionado.offsetHeight) / 2;
+        }
+        })();
+
         // ===== Busca instantânea dos módulos do aluno =====
         // Esconde as linhas que não batem com o texto digitado e mostra o aviso de
         // "nenhum resultado" quando sobra zero — sem recarregar a página.

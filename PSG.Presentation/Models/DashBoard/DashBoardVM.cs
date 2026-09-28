@@ -7,6 +7,7 @@ namespace PSG.Presentation.Models.DashBoard
         public LineGraphSection LineGraphSection { get; set; } = new LineGraphSection();
         public SectorGraphSection SectorGraphSection { get; set; } = new SectorGraphSection();
         public List<AlunoCanceladoItem> AlunosCancelados { get; set; } = new List<AlunoCanceladoItem>();
+        public List<SituacaoInscricoesItem> SituacaoInscricoes { get; set; } = new List<SituacaoInscricoesItem>();
         // Nulos quando não há inscrição nenhuma no status correspondente — a view
         // trata esse caso mostrando "Sem dados disponíveis".
         public CursoImportanciaItem? CursoMaiorCancelamento { get; set; }
@@ -54,6 +55,17 @@ namespace PSG.Presentation.Models.DashBoard
         public string Curso { get; set; } = string.Empty;
         public string Modulo { get; set; } = string.Empty;
         public DateTime DataCancelamento { get; set; }
+    }
+
+    /// <summary>Inscrições de um curso por status (card "Situação das Inscrições").</summary>
+    public class SituacaoInscricoesItem
+    {
+        public string Curso { get; set; } = string.Empty;
+        public int Aprovados { get; set; }
+        public int EmAndamento { get; set; }
+        public int Reprovados { get; set; }
+        public int Cancelados { get; set; }
+        public int Total => Aprovados + EmAndamento + Reprovados + Cancelados;
     }
 
     public class CursoImportanciaItem

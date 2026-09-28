@@ -61,6 +61,28 @@ namespace PSG.Application.Servicos.Cursos
         }
 
         /// <summary>
+        /// Quantidade de inscrições de cada curso em cada status (aprovado, em
+        /// andamento, reprovado e cancelado), para o card "Situação das Inscrições"
+        /// do dashboard. Ordenado por nome.
+        /// </summary>
+        /// <remarks>
+        /// Conta INSCRIÇÕES com a mesma regra de ObterCursoComMaiorTaxaAsync, para os
+        /// números baterem com os cards de maior cancelamento/reprovação logo acima.
+        /// </remarks>
+        public async Task<List<CursoSituacaoInscricoesDto>> ObterSituacaoInscricoesPorCursoAsync()
+        {
+            return await _context.Cursos
+                .OrderBy(c => c.Nome)
+                .Select(c => new CursoSituacaoInscricoesDto(
+                    c.Nome,
+                    c.Modulos.SelectMany(m => m.Alunos).Count(am => am.StatusInscricao == EnumStatus.Aprovado),
+                    c.Modulos.SelectMany(m => m.Alunos).Count(am => am.StatusInscricao == EnumStatus.EmAndamento),
+                    c.Modulos.SelectMany(m => m.Alunos).Count(am => am.StatusInscricao == EnumStatus.Reprovado),
+                    c.Modulos.SelectMany(m => m.Alunos).Count(am => am.StatusInscricao == EnumStatus.Cancelado)))
+                .ToListAsync();
+        }
+
+        /// <summary>
         /// Lista os cursos para a tela de Cursos: nome, total de alunos e taxa de
         /// cancelamento de cada um, ordenados por nome.
         /// </summary>
