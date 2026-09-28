@@ -58,6 +58,7 @@ namespace PSG.Presentation.Controllers
             var cursoMaiorCancelamento = await _cursoService.ObterCursoComMaiorTaxaAsync(EnumStatus.Cancelado);
             var cursoMaiorReprovacao = await _cursoService.ObterCursoComMaiorTaxaAsync(EnumStatus.Reprovado);
             var alunosCancelados = await _alunoService.ObterAlunosCanceladosAsync();
+            var situacaoInscricoes = await _cursoService.ObterSituacaoInscricoesPorCursoAsync();
 
             var viewmodel = new DashBoardVM
             {
@@ -74,6 +75,16 @@ namespace PSG.Presentation.Controllers
                         Curso = a.NomeCurso,
                         Modulo = a.NomeModulo,
                         DataCancelamento = a.DataCancelamento
+                    })
+                    .ToList(),
+                SituacaoInscricoes = situacaoInscricoes
+                    .Select(s => new SituacaoInscricoesItem
+                    {
+                        Curso = s.NomeCurso,
+                        Aprovados = s.Aprovados,
+                        EmAndamento = s.EmAndamento,
+                        Reprovados = s.Reprovados,
+                        Cancelados = s.Cancelados
                     })
                     .ToList()
             };
