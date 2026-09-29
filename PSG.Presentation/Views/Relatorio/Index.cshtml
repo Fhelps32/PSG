@@ -10,6 +10,9 @@
     <p class="text-slate-500 text-sm mt-1">Configure os filtros, confira a prévia e exporte em Excel ou CSV</p>
 </div>
 
+@* Fica FORA do form de propósito: a prévia serializa o form inteiro na query
+   string (GET) e o token não deve ir parar na URL. O gerarRelatorio() lê o
+   token daqui e o envia no corpo do POST. *@
 @Html.AntiForgeryToken()
 
 <form id="formRelatorio" class="flex flex-col gap-6">
@@ -299,6 +302,16 @@
         // Via fetch, e não um submit comum: assim dá pra mostrar erro de validação
         // sem sair da página. O download em si é disparado a partir do blob da
         // resposta — o back-end já manda o Content-Disposition com o nome do arquivo.
+        //
+        // Os filtros vão na query string (como na prévia) e só o token antiforgery vai
+        // no corpo. Dois motivos:
+        // - o token fica fora do form, então new FormData(form) não o levava e o
+        //   [ValidateAntiForgeryToken] recusava toda exportação com 400;
+        // - o ASP.NET lê valores do CORPO com a cultura do servidor (pt-BR) e os da
+        //   query string com a invariante. A nota "7.5" do input number virava 75 no
+        //   corpo e o arquivo saía diferente da prévia; pela query ela é lida igual.
+        const tokenAntiforgery = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
         async function gerarRelatorio(modoRapido) {
         erroGeracao.classList.add('hidden');
 
@@ -308,13 +321,21 @@
         botao.innerHTML = '<i class="bi bi-hourglass-split"></i> Gerando...';
 
         try {
-        const dados = new FormData(form);
-        dados.set('modoRapido', modoRapido ? 'true' : 'false');
+        const parametros = new URLSearchParams(new FormData(form));
+        parametros.set('modoRapido', modoRapido ? 'true' : 'false');
 
-        const resp = await fetch('@Url.Action("Gerar", "Relatorio")', { method: 'POST', body: dados });
+        const corpo = new FormData();
+        corpo.append('__RequestVerificationToken', tokenAntiforgery);
+
+        const resp = await fetch(`@Url.Action("Gerar", "Relatorio")?${parametros.toString()}`, { method: 'POST', body: corpo });
 
         if (!resp.ok) {
-        erroGeracao.textContent = (await resp.text()) || 'Não foi possível gerar o relatório. Tente novamente.';
+        // 400 de validação traz a mensagem em texto puro; outros erros (token
+        // expirado, erro no servidor) vêm sem corpo útil, então mostra o código.
+        const tipo = resp.headers.get('Content-Type') || '';
+        const mensagem = tipo.startsWith('text/plain') ? await resp.text() : '';
+        erroGeracao.textContent = mensagem ||
+        `Não foi possível gerar o relatório (erro ${resp.status}). Recarregue a página e tente novamente.`;
         erroGeracao.classList.remove('hidden');
         return;
         }
@@ -331,7 +352,12 @@
         document.body.appendChild(link);
         link.click();
         link.remove();
-        window.URL.revokeObjectURL(url);
+        // Revogar na mesma hora pode cancelar o download em alguns navegadores
+        // (Firefox/Safari): o clique só agenda o download, que lê a URL depois.
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+        } catch {
+        erroGeracao.textContent = 'Não foi possível falar com o servidor. Verifique a conexão e tente novamente.';
+        erroGeracao.classList.remove('hidden');
         } finally {
         botao.disabled = false;
         botao.innerHTML = rotuloOriginal;
